@@ -33,7 +33,8 @@ from soc.cache import sidebar
 from soc.models.survey import SurveyContent, Survey
 from soc.models.survey_record import SurveyRecord, SurveyRecordGroup
 from soc.logic.models.user import logic as user_logic
-from soc.models.work import Work, work
+from soc.models.work import Work
+from soc.logic.models import work
 
 GRADES = {'pass': True, 'fail': False}
 PROJECT_STATUSES = {
