@@ -27,9 +27,7 @@ __authors__ = [
 
 
 from google.appengine.ext import db
-
 from django.utils.translation import ugettext
-
 import soc.models.work
 
 
@@ -54,7 +52,6 @@ class SurveyContent(db.Expando):
   def getSurveyOrder(self):
     """Make survey questions always appear in the same (creation) order.
     """
-
     survey_order = {}
     schema = eval(self.schema)
     for property in self.dynamic_properties():
@@ -70,7 +67,6 @@ class SurveyContent(db.Expando):
   def orderedProperties(self):
     """Helper for View.get_fields(), keep field order.
     """
-
     properties = []
     survey_order = self.getSurveyOrder().items()
     for position,key in survey_order:
@@ -82,14 +78,10 @@ class Survey(soc.models.work.Work):
   """Model of a Survey.
 
   This model describes meta-information and permissions.
-  The actual questions of the survey are contained in the SurveyContent entity.
+  The actual questions of the survey are contained
+  in the SurveyContent entity.
   """
 
-  #TODO(James) Right now, this model has several properties from Document and
-  #TODO(James) it is unclear if they are necessary.
-  #
-  #TODO(James)  The inherited scope property is used to reference to a program.
-  #TODO(James)  Would it be more clear if a 'program' property were used?
   URL_NAME = 'survey'
   # We should use euphemisms like "student" and "mentor" if possible
   SURVEY_ACCESS = ['admin', 'restricted', 'member', 'user']
@@ -103,11 +95,6 @@ class Survey(soc.models.work.Work):
   GRADE_OPTIONS = {'midterm':['mid_term_passed', 'mid_term_failed'],
                    'final':['final_passed', 'final_failed'],
                    'N/A':[] }
-  # there should be a GSoC-specific property determining
-  # whether the survey is for the midterm or the final
-
-  #: field storing the prefix of this document
-  # Should this be removed from surveys?
   prefix = db.StringProperty(default='program', required=True,
       choices=['site', 'club', 'sponsor', 'program', 'org', 'user'],
       verbose_name=ugettext('Prefix'))
@@ -158,7 +145,6 @@ class Survey(soc.models.work.Work):
   deadline.help_text = ugettext(
       'Indicates a date after which this survey'
       ' cannot be taken.')
-
 
   # this property should be named 'survey_content'
   survey_content = db.ReferenceProperty(SurveyContent,

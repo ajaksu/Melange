@@ -15,6 +15,9 @@
 # limitations under the License.
 
 """SurveyRecord represents a single Survey result.
+
+SurveyRecordGroup represents a cluster (mentor/student) of SurveyRecords
+for an evaluation period.
 """
 
 __authors__ = [
@@ -25,11 +28,10 @@ __authors__ = [
 
 from google.appengine.ext import db
 from django.utils.translation import ugettext
-
 import soc.models.student_project
+from soc.models.survey import Survey
 import soc.models.user
 
-from soc.models.survey import Survey
 
 
 class SurveyRecord(db.Expando):
