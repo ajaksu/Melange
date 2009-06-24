@@ -22,22 +22,18 @@ __authors__ = [
   '"James Levy" <jamesalexanderlevy@gmail.com>',
   ]
 
-import logging
 
 from google.appengine.ext import db
-
-import soc.models.student_project
-
-from soc.cache import sidebar
-from soc.logic.models import work
 from soc.logic.models import linkable as linkable_logic
+import logging
+from soc.logic.models.news_feed import logic as newsfeed_logic
 from soc.models.program import Program
+from soc.models import student_project
+from soc.cache import sidebar
 from soc.models.survey import SurveyContent, Survey
 from soc.models.survey_record import SurveyRecord, SurveyRecordGroup
-from soc.models.work import Work
-from soc.logic.models.news_feed import logic as newsfeed_logic
 from soc.logic.models.user import logic as user_logic
-
+from soc.models.work import Work, work
 
 GRADES = {'pass': True, 'fail': False}
 PROJECT_STATUSES = {
@@ -59,6 +55,10 @@ class Logic(work.Logic):
 
   def createSurvey(self, survey_fields, schema, survey_content=False):
     """Create a new survey from prototype.
+    params:
+    survey_fields = dict of survey field items (see SurveyContent model)
+    schema = metadata about survey fields (SurveyContent.schema)
+    survey_content = existing SurveyContent entity
     """
 
     if not survey_content:
@@ -75,6 +75,11 @@ class Logic(work.Logic):
 
   def updateSurveyRecord(self, user, survey, survey_record, fields):
     """ Create a new survey record, or get an existing one.
+    params:
+    user = user taking survey
+    survey = survey entity
+    survey_record = existing record, if one exists
+    fields = submitted responses to survey fields
     """
 
     if survey_record:
@@ -87,7 +92,7 @@ class Logic(work.Logic):
     schema = eval(survey.survey_content.schema)
     for name, value in fields.items():
       if name == 'project':
-        project = soc.models.student_project.StudentProject.get(value)
+        project = student_project.StudentProject.get(value)
         survey_record.project = project
       elif name == 'grade':
         survey_record.grade = GRADES[value]
@@ -108,7 +113,7 @@ class Logic(work.Logic):
     return survey_record
 
 
-  def setSurveyRecordGroup(self, role, survey, survey_record, project):
+  def setSurveyRecordGroup(self, survey, survey_record, project):
     """ First looks for an existing SurveyRecordGroup, using the 
     project and its current status as a filter. 
     
@@ -118,6 +123,11 @@ class Logic(work.Logic):
     This means that a student cannot take a survey after the mentor
     has taken the accompanying survey and the project has since 
     changed. (Assuming we want this strict behavior)
+    
+    params:
+    survey = survey entity
+    survey_record = saved response to survey
+    project = student project for survey taker
     """
     group_query = SurveyRecordGroup.all(
     ).filter("project = ", project
@@ -143,6 +153,11 @@ class Logic(work.Logic):
           
   def getUserRole(self, user, survey, project):
     """ gets the role of a user for a project, used for SurveyRecordGroup 
+    
+    params:
+    user: user taking survey
+    survey: survey entity
+    project: student project for this user
     """
     if survey.taking_access == 'mentor evaluation':
       mentors = self.getMentorforProject(user, project)
@@ -163,30 +178,44 @@ class Logic(work.Logic):
       
       
   def getStudentforProject(self, user, project):
-      import soc.models.student
-      from soc.logic.models.student import logic as student_logic
-      user_students = student_logic.getForFields({'user': user}) # status=active?
-      if not user_students: return []
-      return set([project.student for project in sum((list(s.student_projects.run()
-      ) for s in user_students), []
-      ) if project.key() == project.key()])
+    """ get student projects for a student
+    params:
+    user = survey taking user
+    project = survey taker's student project
+    """
+    import soc.models.student
+    from soc.logic.models.student import logic as student_logic
+    #TODO: filter for accepted, midterm_passed, etc?
+    user_students = student_logic.getForFields({'user': user}) 
+    if not user_students: return []
+    return set([project.student for project in sum(
+    (list(s.student_projects.run())
+    for s in user_students), []) if project.key() == project.key()])
 
   def getMentorforProject(self, user, project):
-      import soc.models.mentor
-      from soc.logic.models.mentor import logic as mentor_logic
-      user_mentors = mentor_logic.getForFields({'user': user}) # program = program  # status=active?
-      if not user_mentors: return []
-      return set([project.mentor for project in sum((list(mentor.student_projects.run()
-      ) for mentor in user_mentors), []
-       ) if project.key() == project.key()])
-            
+    """ get student projects for a mentor
+    params:
+    user = survey taking user
+    project = survey taker's student project
+    """
+    import soc.models.mentor
+    from soc.logic.models.mentor import logic as mentor_logic
+    #TODO: filter for accepted, midterm_passed, etc?
+    user_mentors = mentor_logic.getForFields({'user': user}) 
+    if not user_mentors: return []
+    return set([project.mentor for project in sum(
+    (list(mentor.student_projects.run())
+    for mentor in user_mentors), []) if project.key() == project.key()])
+          
     
       
   def activateGrades(self, survey):
     """ Gets survey key name from a request path
+    params: 
+    survey = survey entity
     """
     if survey.taking_access != "mentor evaluation":
-      logging.error("Cannot activate grades for survey %s with taking access %s" 
+      logging.error("Cannot grade survey %s with taking access %s" 
       % (survey.key().name(), survey.taking_access))
       return False 
     program = survey.scope
@@ -230,6 +259,8 @@ class Logic(work.Logic):
       
   def getKeyNameFromPath(self, path):
     """ Gets survey key name from a request path
+    params:
+    path = current path
     """
     return '/'.join(path.split('/')[-4:]).split('?')[0]
 
@@ -239,6 +270,9 @@ class Logic(work.Logic):
     Get projects linking user to a program.
     Serves as access handler (since no projects == no access)
     And retrieves projects to choose from (if mentors have >1 projects)
+    params:
+    survey = survey entity
+    user = survey taking user
 
     """
     this_program = survey.scope
@@ -257,7 +291,12 @@ class Logic(work.Logic):
     return these_projects
 
   def getDebugUser(self, survey, this_program):
-    # impersonate another user, for debugging
+    """debugging method impersonates other roles to test
+    taking survey, saving response, and grading.
+    params:
+    survey = survey entity
+    this_program = program scope of survey
+    """
     if 'mentor' in survey.taking_access:
       from soc.models.mentor import Mentor
       role = Mentor.get_by_key_name(
@@ -270,23 +309,37 @@ class Logic(work.Logic):
     if role: return role.user
 
   def getStudentProjects(self, user, program):
-      import soc.models.student
-      from soc.logic.models.student import logic as student_logic
-      user_students = student_logic.getForFields({'user': user}) # status=active?
-      if not user_students: return []
-      return [project for project in sum((list(u.student_projects.run()
-      ) for u in user_students), []
-      ) if project.program.key() == program.key()]
+    """
+    get student projects for a student
+    params:
+    user = survey taking user
+    program = program scope for survey
+    """
+    import soc.models.student
+    from soc.logic.models.student import logic as student_logic
+    #TODO: filter for accepted, midterm_passed, etc?
+    user_students = student_logic.getForFields({'user': user}) 
+    if not user_students: return []
+    return [project for project in sum((list(u.student_projects.run()
+    ) for u in user_students), []
+    ) if project.program.key() == program.key()]
 
 
   def getMentorProjects(self, user, program):
-      import soc.models.mentor
-      from soc.logic.models.mentor import logic as mentor_logic
-      user_mentors = mentor_logic.getForFields({'user': user}) # program = program  # status=active?
-      if not user_mentors: return []
-      return [project for project in sum((list(u.student_projects.run()
-      ) for u in user_mentors), []
-      ) if project.program.key() == program.key()]
+    """
+    get student projects for a mentor
+    params:
+    user = survey taking user
+    program = program scope for survey
+    """
+    import soc.models.mentor
+    from soc.logic.models.mentor import logic as mentor_logic
+    #TODO: filter for accepted, midterm_passed, etc?
+    user_mentors = mentor_logic.getForFields({'user': user}) 
+    if not user_mentors: return []
+    return [project for project in sum(
+    (list(u.student_projects.run()) 
+    for u in user_mentors), []) if project.program.key() == program.key()]
 
   def getKeyValuesFromEntity(self, entity):
     """See base.Logic.getKeyNameValues.
@@ -326,6 +379,8 @@ class Logic(work.Logic):
 
   def getScope(self, entity):
     """gets Scope for entity
+    params:
+    entity = survey entity
     """
     if getattr(entity, 'scope', None): return entity.scope
     import soc.models.program
@@ -422,15 +477,19 @@ results_logic = ResultsLogic()
 
 def notifyStudents(survey):
   """POC for notification, pending mentor-project linking.
+  params:
+  survey = survey entity
   """
 
+  #TODO: Get this working again
   from soc.models.student import Student
   from soc.models.program import Program
   from soc.logic.helper import notifications
   notify = notifications.sendNotification
   scope = Program.get_by_key_name(survey.scope_path)
   students = Student.gql("WHERE scope = :1", scope).run()
-  have_answered = set([rec.user.key() for rec in survey.survey_records.run()])
+  have_answered = set(
+  [rec.user.key() for rec in survey.survey_records.run()])
   creator = survey.author
   path = (survey.entity_type().lower(), survey.prefix,
           survey.scope_path, survey.link_id)
