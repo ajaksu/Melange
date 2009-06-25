@@ -29,6 +29,7 @@ import StringIO
 import string
 from django import forms
 from django import http
+from django.utils import simplejson
 
 from google.appengine.ext import db
 
@@ -525,10 +526,8 @@ class View(base.View):
     RENDER_TYPES = {'select': 'selection',
                     'checkboxes': 'pick_multi',
                     'radio_buttons': 'pick_quant' }
-                        
-                        
+
     for key in schema:
-      
       if schema[key]['type'] in CHOICE_TYPES and key in survey_fields:
         render_for = 'render_for_' + key
         if render_for in POST:
@@ -599,6 +598,7 @@ class View(base.View):
         <option>Pass/Fail</option>
       </select></td></tr>
     """
+
     self._entity = entity
     survey_content = entity.survey_content
     user = user_logic.getForCurrentAccount()
@@ -612,11 +612,11 @@ class View(base.View):
                                      editing=True, read_only=False)
     survey_form.getFields()
 
-      
+
     # activate grades flag -- TODO: Can't configure notice on edit page
     if request._get.get('activate'):
       context['notice'] = "Evaluation Grades Have Been Activated"
-      
+
     local = dict(survey_form=survey_form, question_types=QUESTION_TYPES,
                 survey_h=entity.survey_content)
     context.update(local)
@@ -787,18 +787,37 @@ def _get_csv_header(sur):
 
   tpl = '# %s: %s\n'
 
-  # add properties
+  json = sur.toDict()
+  json.update(dict((f, str(getattr(sur, f))) for f in PLAIN.split()))
+  json.update(dict((f, str(getattr(sur, f).link_id)) for f in FIELDS.split()))
+
+  # add static properties
   fields = ['# Melange Survey export for \n#  %s\n#\n' % sur.title]
   fields += [tpl % (k,v) for k,v in sur.toDict().items()]
   fields += [tpl % (f, str(getattr(sur, f))) for f in PLAIN.split()]
   fields += [tpl % (f, str(getattr(sur, f).link_id)) for f in FIELDS.split()]
   fields.sort()
 
+  # add dynamic properties
+  fields += ['#\n#---\n#\n']
+  dynamic = sur.survey_content.dynamic_properties()
+  dynamic = [(prop, getattr(sur.survey_content, prop)) for prop in dynamic]
+  fields += [tpl % (k,v) for k,v in sorted(dynamic)]
+
+  dynamic = sur.survey_content.dynamic_properties()
+  content = ((prop, getattr(sur.survey_content, prop)) for prop in dynamic)
+  json['survey_content'] = dict(content)
+
   # add schema
   fields += ['#\n#---\n#\n']
   schema =  sur.survey_content.schema
+  json['survey_content']['schema'] = eval(sur.survey_content.schema)
   indent = '},\n#' + ' ' * 9
   fields += [tpl % ('Schema', schema.replace('},', indent)) + '#\n']
+
+  # add JSON version
+  fields += ['#\n#---\n#\n']
+  fields += simplejson.dumps(json, indent=2).replace('\n', '\n#') + '\n#\n'
 
   return ''.join(fields).replace('\n', '\r\n')
 
@@ -820,16 +839,16 @@ def to_csv(survey):
   """CSV exporter.
   """
 
-  try:
-    first = survey.survey_records.run().next()
-  except StopIteration:
-    # bail out early if survey_records.run() is empty
-    return '', survey.link_id
-
   # get header and properties
   header = _get_csv_header(survey)
   leading = ['user', 'created', 'modified']
   properties = leading + survey.survey_content.orderedProperties()
+
+  try:
+    first = survey.survey_records.run().next()
+  except StopIteration:
+    # bail out early if survey_records.run() is empty
+    return header, survey.link_id
 
   # generate results list
   recs = survey.survey_records.run()
