@@ -147,7 +147,11 @@ class SurveyForm(djangoforms.ModelForm):
 
     # first, insert dynamic survey fields
     for position, property in survey_order.items():
+      position = position * 2
       self.fields.insert(position, property, self.survey_fields[property])
+      if not self.editing:
+        property = 'comment_for_' + property
+        self.fields.insert(position - 1, property, self.survey_fields[property])
     return self.fields
 
   def addLongField(self, field, value, attrs, req=False, label='', tip=''):
@@ -163,6 +167,13 @@ class SurveyForm(djangoforms.ModelForm):
                          widget=widget, initial=value)
     self.survey_fields[field] = question
 
+    if not self.editing:
+      widget = widgets.Textarea(attrs=attrs)
+      comment = CharField(help_text=tip, required=False, label='Comments',
+                          widget=widget, initial='')
+      self.survey_fields['comment_for_' + field] = comment
+
+
   def addShortField(self, field, value, attrs, req=False, label='', tip=''):
     """Add a short answer fields to this form.
     """
@@ -177,6 +188,13 @@ class SurveyForm(djangoforms.ModelForm):
     question = CharField(help_text=tip, required=req, label=label,
                          widget=widget, max_length=40, initial=value)
     self.survey_fields[field] = question
+
+    if not self.editing:
+      widget = widgets.Textarea(attrs=attrs)
+      comment = CharField(help_text=tip, required=False, label='Comments',
+                          widget=widget, initial='')
+      self.survey_fields['comment_for_' + field] = comment
+
 
   def addSingleField(self, field, value, attrs, schema, req=False, label='',
                      tip=''):
@@ -210,6 +228,13 @@ class SurveyForm(djangoforms.ModelForm):
                             choices=tuple(these_choices), widget=widget)
     self.survey_fields[field] = question
 
+    if not self.editing:
+      widget = widgets.Textarea(attrs=attrs)
+      comment = CharField(help_text=tip, required=False, label='Comments',
+                          widget=widget, initial='')
+      self.survey_fields['comment_for_' + field] = comment
+
+
   def addMultiField(self, field, value, attrs, schema, req=False, label='',
                     tip=''):
     """Add a pick_multi field to this form.
@@ -239,6 +264,12 @@ class SurveyForm(djangoforms.ModelForm):
                              choices=tuple(these_choices), widget=widget,
                              initial=value)
     self.survey_fields[field] = question
+    if not self.editing:
+      widget = widgets.Textarea(attrs=attrs)
+      comment = CharField(help_text=tip, required=False, label='Comments',
+                          widget=widget, initial='')
+      self.survey_fields['comment_for_' + field] = comment
+
 
   def addQuantField(self, field, value, attrs, schema, req=False, label='',
                     tip=''):
@@ -267,6 +298,12 @@ class SurveyForm(djangoforms.ModelForm):
                              choices=tuple(these_choices), widget=widget,
                              initial=value)
     self.survey_fields[field] = question
+    if not self.editing:
+      widget = widgets.Textarea(attrs=attrs)
+      comment = CharField(help_text=tip, required=False, label='Comments',
+                          widget=widget, initial='')
+      self.survey_fields['comment_for_' + field] = comment
+
 
   class Meta(object):
     model = SurveyContent

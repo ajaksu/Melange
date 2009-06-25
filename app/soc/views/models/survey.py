@@ -405,6 +405,8 @@ class View(base.View):
 
     if not entity:
       # new Survey
+      if 'serialized' in request.POST:
+        fields, schema, survey_fields = self.importSerialized(request, fields, user)
       fields['author'] = user
     else:
       fields['author'] = entity.author
@@ -778,6 +780,22 @@ class View(base.View):
     data = simplejson.dumps(json, indent=2)
 
     return self.json(request, data=json)
+
+  def importSerialized(self, request, fields, user):
+    json = request.POST['serialized']
+    json = simplejson.loads(json)['data']
+    survey_content = json.pop('survey_content')
+    schema = survey_content.pop('schema')
+    del json['author']
+    del json['created']
+    del json['modified']
+    #del json['is_featured']
+    # keywords can't be unicode
+    keywords = {}
+    for key, val in json.items():
+      fields[str(key)] = val
+    keywords['is_featured'] = eval(keywords['is_featured'])
+    return fields, schema, survey_content
 
   def getContextEntity(self, request, page_name, params, kwargs):
     context = responses.getUniversalContext(request)
