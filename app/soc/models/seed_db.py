@@ -764,7 +764,7 @@ def seed_survey(request, i):
       'fields': fields,
       'schema': schema,
       'deadline': DEADLINE,
-      'taking_access': 'everyone',
+      'taking_access': 'public',
       }
   return properties
 
@@ -1065,11 +1065,11 @@ def seed_many(request, *args, **kwargs):
       if seed_type == 'survey':
         survey_content = survey_logic.createSurvey(properties['fields'],
                                                     properties['schema'],
-                                                    this_survey=None
+                                                    survey_content=None
                                                     )
-        entity.this_survey = survey_content
+        entity.survey_content = survey_content
       elif seed_type == 'survey_answer':
-        record = SurveyRecord.gql("WHERE user = :1 AND this_survey = :2",
+        record = SurveyRecord.gql("WHERE user = :1 AND survey = :2",
                                   properties['user'], properties['_survey']
                                   ).get()
         entity = survey_logic.updateSurveyRecord(properties['user'],

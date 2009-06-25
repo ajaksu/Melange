@@ -122,6 +122,8 @@ class SurveyForm(djangoforms.ModelForm):
         continue # TODO(ajaksu) should we error here?
       elif 'question' in schema[field]:
         label = schema[field].get('question', None) or field
+      else:
+        label = field
 
       # dispatch to field-specific methods
       if schema[field]["type"] == "long_answer":
