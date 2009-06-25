@@ -653,7 +653,7 @@ div #survey_widget {
   background-color: #FFFEEB;
   border: 5px solid #F7CA75;
   padding: 15px;
-  max-width:700px;
+  /*max-width:700px;*/
   float:left;
 }
 
