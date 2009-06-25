@@ -426,7 +426,6 @@ class View(base.View):
     survey_content = survey_logic.createSurvey(survey_fields, schema,
                                                 survey_content=survey_content)
 
-
     # save survey_content for existent survey or pass for creating a new one
     if entity:
       entity.survey_content = survey_content
@@ -726,7 +725,7 @@ class View(base.View):
     """View for SurveyRecord and SurveyRecordGroup.
     """
 
-    entity, context = self.getContextEntity(request, params, kwargs)
+    entity, context = self.getContextEntity(request, page_name, params, kwargs)
 
     if context is None:
       # user cannot see this page, return error response

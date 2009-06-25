@@ -111,9 +111,13 @@ class SurveyForm(djangoforms.ModelForm):
     # add unordered fields to self.survey_fields
     for field in self.survey_content.dynamic_properties():
 
+      # a comment made by the user
+      comment = ''
       if has_record and hasattr(self.survey_record, field):
         # previously entered value
         value = getattr(self.survey_record, field)
+        if hasattr(self.survey_record, 'comment_for_' + field):
+          comment = getattr(self.survey_record, 'comment_for_' + field)
       else:
         # use prompts set by survey creator
         value = getattr(self.survey_content, field)
@@ -127,15 +131,20 @@ class SurveyForm(djangoforms.ModelForm):
 
       # dispatch to field-specific methods
       if schema[field]["type"] == "long_answer":
-        self.addLongField(field, value, extra_attrs, label=label)
+        self.addLongField(field, value, extra_attrs, label=label,
+                          comment=comment)
       elif schema[field]["type"] == "short_answer":
-        self.addShortField(field, value, extra_attrs, label=label)
+        self.addShortField(field, value, extra_attrs, label=label,
+                           comment=comment)
       elif schema[field]["type"] == "selection":
-        self.addSingleField(field, value, extra_attrs, schema, label=label)
+        self.addSingleField(field, value, extra_attrs, schema, label=label,
+                            comment=comment)
       elif schema[field]["type"] == "pick_multi":
-        self.addMultiField(field, value, extra_attrs, schema, label=label)
+        self.addMultiField(field, value, extra_attrs, schema, label=label,
+                           comment=comment)
       elif schema[field]["type"] == "pick_quant":
-        self.addQuantField(field, value, extra_attrs, schema, label=label)
+        self.addQuantField(field, value, extra_attrs, schema, label=label,
+                           comment=comment)
 
     return self.insertFields()
 
@@ -154,7 +163,8 @@ class SurveyForm(djangoforms.ModelForm):
         self.fields.insert(position - 1, property, self.survey_fields[property])
     return self.fields
 
-  def addLongField(self, field, value, attrs, req=False, label='', tip=''):
+  def addLongField(self, field, value, attrs, req=False, label='', tip='',
+                   comment=''):
     """Add a long answer fields to this form.
     """
 
@@ -170,11 +180,12 @@ class SurveyForm(djangoforms.ModelForm):
     if not self.editing:
       widget = widgets.Textarea(attrs=attrs)
       comment = CharField(help_text=tip, required=False, label='Comments',
-                          widget=widget, initial='')
+                          widget=widget, initial=comment)
       self.survey_fields['comment_for_' + field] = comment
 
 
-  def addShortField(self, field, value, attrs, req=False, label='', tip=''):
+  def addShortField(self, field, value, attrs, req=False, label='', tip='',
+                    comment=''):
     """Add a short answer fields to this form.
     """
 
@@ -192,12 +203,12 @@ class SurveyForm(djangoforms.ModelForm):
     if not self.editing:
       widget = widgets.Textarea(attrs=attrs)
       comment = CharField(help_text=tip, required=False, label='Comments',
-                          widget=widget, initial='')
+                          widget=widget, initial=comment)
       self.survey_fields['comment_for_' + field] = comment
 
 
   def addSingleField(self, field, value, attrs, schema, req=False, label='',
-                     tip=''):
+                     tip='', comment=''):
     """Add a selection field to this form.
 
     Widget depends on whether we're editing or displaying the survey taking UI.
@@ -231,12 +242,12 @@ class SurveyForm(djangoforms.ModelForm):
     if not self.editing:
       widget = widgets.Textarea(attrs=attrs)
       comment = CharField(help_text=tip, required=False, label='Comments',
-                          widget=widget, initial='')
+                          widget=widget, initial=comment)
       self.survey_fields['comment_for_' + field] = comment
 
 
   def addMultiField(self, field, value, attrs, schema, req=False, label='',
-                    tip=''):
+                    tip='', comment=''):
     """Add a pick_multi field to this form.
 
     Widget depends on whether we're editing or displaying the survey taking UI.
@@ -267,12 +278,12 @@ class SurveyForm(djangoforms.ModelForm):
     if not self.editing:
       widget = widgets.Textarea(attrs=attrs)
       comment = CharField(help_text=tip, required=False, label='Comments',
-                          widget=widget, initial='')
+                          widget=widget, initial=comment)
       self.survey_fields['comment_for_' + field] = comment
 
 
   def addQuantField(self, field, value, attrs, schema, req=False, label='',
-                    tip=''):
+                    tip='', comment=''):
     """Add a pick_quant field to this form.
 
     Widget depends on whether we're editing or displaying the survey taking UI.
@@ -301,7 +312,7 @@ class SurveyForm(djangoforms.ModelForm):
     if not self.editing:
       widget = widgets.Textarea(attrs=attrs)
       comment = CharField(help_text=tip, required=False, label='Comments',
-                          widget=widget, initial='')
+                          widget=widget, initial=comment)
       self.survey_fields['comment_for_' + field] = comment
 
 
