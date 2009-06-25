@@ -647,27 +647,27 @@ span.edited {
 
 
 div #survey_widget {
-margin: 20px;
--moz-border-radius: 5px;
--webkit-border-radius: 5px;
-background-color: #FFFEEB;
-border: 5px solid #F7CA75;
-padding: 15px;
-max-width:700px;
-float:left;
+  margin: 20px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  background-color: #FFFEEB;
+  border: 5px solid #F7CA75;
+  padding: 15px;
+  max-width:700px;
+  float:left;
 }
 
 div #survey_widget.survey_admin {
-/*margin-left:-100px;*/
+
 }
 
 div #survey_widget tr {
-float:left;
-clear:both;
+  float:left;
+  clear:both;
 }
 
 div #survey_widget th, div #survey_widget td {
-padding-top:15px;
+  padding-top:15px;
 }
 
 /* fields */
@@ -677,12 +677,12 @@ div #survey_widget textarea {
   width:300px;
 }
 
-div #survey_widget input .text_question {
-width:320px;
+div #survey_widget input.text_question {
+  width:320px;
 }
 
-div #survey_widget  td.formfieldlabel {
-font-size:medium;
+div #survey_widget td.formfieldlabel {
+  font-size:medium;
 }
 
 #survey_widget.view input[disabled="disabled"],
@@ -692,12 +692,12 @@ font-size:medium;
   color: black;
 }
 
-
-#survey_widget .quant_radio input, #survey_widget .quant_radio label {
-clear:left;
-display:block;
-float:left;
-margin:4px;
+#survey_widget.quant_radio input,
+#survey_widget.quant_radio label {
+  clear:left;
+  display:block;
+  float:left;
+  margin:4px;
 }
 
 /* options */
@@ -720,8 +720,8 @@ div #survey_widget th label {
   max-width: 180px;
 }
 
-div #survey_widget tr.role-specific label{
-color:#666666;
+div #survey_widget tr.role-specific label {
+  color:#666666;
 }
 
 
@@ -730,34 +730,68 @@ span.formfieldlabel {
   font-size: small;
 }
 
-
-.sortable_li {border: solid 1px !important; padding:5px !important;}
-
-
-.sortable_li, div #survey_widget fieldset{
--moz-border-radius: 5px;
--webkit-border-radius: 5px;
+.sortable_li {
+  border: solid 1px !important;
+  padding:5px !important;
 }
 
-div #survey_widget fieldset, div #survey_widget th, 
-div #survey_widget td, div #survey_widget select
-{
-max-width:700px;
+.sortable_li,
+div #survey_widget fieldset {
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
 }
 
-#dialog {font-size: 62.5%;}
-#dialog    label, input { display:block; }
-#dialog p{ text-align:center; padding-left: 0;}
-#dialog    input.text { margin-bottom:12px; width:95%; padding: .4em; }
-#dialog fieldset { padding:0; border:0; margin-top:25px; }
-#dialog    h1 { font-size: 1.2em; margin: .6em 0; }
-
-
-.ui-button {outline: 0; margin:0; padding: .4em 1em .5em;
-            text-decoration:none; cursor:pointer; position: relative;
-            text-align: center;
+div #survey_widget fieldset,
+div #survey_widget th,
+div #survey_widget td,
+div #survey_widget select {
+  max-width:700px;
 }
-.ui-dialog .ui-state-highlight, .ui-dialog .ui-state-error { padding: .3em;  }
+
+#dialog {
+  font-size: 62.5%;
+}
+
+#dialog label, #dialog input {
+  display:block;
+}
+
+#dialog p {
+  text-align:center;
+  padding-left: 0;
+}
+
+#dialog input.text {
+  margin-bottom:12px;
+  width:95%;
+  padding: .4em;
+}
+
+#dialog fieldset {
+  padding:0;
+  border:0;
+  margin-top:25px;
+}
+
+#dialog h1 {
+  font-size: 1.2em;
+  margin: .6em 0;
+}
+
+.ui-button {
+  outline: 0;
+  margin:0;
+  padding: .4em 1em .5em;
+  text-decoration:none;
+  cursor:pointer;
+  position: relative;
+  text-align: center;
+}
+
+.ui-dialog .ui-state-highlight,
+.ui-dialog .ui-state-error {
+  padding: .3em;
+}
 
 .pick_multi input {
   display: inline;
@@ -771,7 +805,7 @@ max-width:700px;
 }
 
 .news_feed .inner{
-padding:0 20px;
+  padding:0 20px;
 }
 
 .news_feed h2 {
@@ -788,7 +822,6 @@ padding:0 20px;
   text-decoration: none;
   color: black;
 }
-
 
 .news_feed .entry {
   margin:1em 0.3em;
@@ -808,5 +841,5 @@ padding:0 20px;
 }
 
 a#feed_icon img{
-margin:-1px 0;
+  margin:-1px 0;
 }

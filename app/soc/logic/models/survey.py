@@ -38,8 +38,8 @@ from soc.logic.models import work
 
 GRADES = {'pass': True, 'fail': False}
 PROJECT_STATUSES = {
-'accepted': {True: 'mid_term_passed', False: 'mid_term_failed'}, 
-'mid_term_passed': {True: 'passed', False: 'final_failed'} 
+'accepted': {True: 'mid_term_passed', False: 'mid_term_failed'},
+'mid_term_passed': {True: 'passed', False: 'final_failed'}
 }
 
 class Logic(work.Logic):
@@ -88,7 +88,7 @@ class Logic(work.Logic):
       for prop in survey_record.dynamic_properties():
         delattr(survey_record, prop)
     else:
-      create = True 
+      create = True
       survey_record = SurveyRecord(user=user, survey=survey)
     schema = eval(survey.survey_content.schema)
     for name, value in fields.items():
@@ -115,16 +115,16 @@ class Logic(work.Logic):
 
 
   def setSurveyRecordGroup(self, survey, survey_record, project):
-    """ First looks for an existing SurveyRecordGroup, using the 
-    project and its current status as a filter. 
-    
-    IOW SurveyRecordGroup cannot consist of surveys taken with 
+    """ First looks for an existing SurveyRecordGroup, using the
+    project and its current status as a filter.
+
+    IOW SurveyRecordGroup cannot consist of surveys taken with
     two different statuses.
-    
+
     This means that a student cannot take a survey after the mentor
-    has taken the accompanying survey and the project has since 
+    has taken the accompanying survey and the project has since
     changed. (Assuming we want this strict behavior)
-    
+
     params:
     survey = survey entity
     survey_record = saved response to survey
@@ -151,10 +151,10 @@ class Logic(work.Logic):
     if survey.taking_access == 'student evaluation':
       survey_record_group.student_record = survey_record
     return survey_record_group
-          
+
   def getUserRole(self, user, survey, project):
-    """ gets the role of a user for a project, used for SurveyRecordGroup 
-    
+    """ gets the role of a user for a project, used for SurveyRecordGroup
+
     params:
     user: user taking survey
     survey: survey entity
@@ -162,22 +162,22 @@ class Logic(work.Logic):
     """
     if survey.taking_access == 'mentor evaluation':
       mentors = self.getMentorforProject(user, project)
-      if len(mentors) < 1 or len(mentors) > 1: 
+      if len(mentors) < 1 or len(mentors) > 1:
         logging.warning('Unable to determine mentor for \
         user %s. Results returned: %s ' % (
         user.key().name(), str(mentors)) )
         return False
       this_mentor = mentors[0]
-    if survey.taking_access == 'student evaluation': 
+    if survey.taking_access == 'student evaluation':
       students = self.getStudentforProject(user, project)
-      if len(students) < 1 or len(students) > 1: 
+      if len(students) < 1 or len(students) > 1:
         logging.warning('Unable to determine student for \
         user %s. Results returned: %s ' % (
         user.key().name(), str(students)) )
         return False
       this_student = students[0]
-      
-      
+
+
   def getStudentforProject(self, user, project):
     """ get student projects for a student
     params:
@@ -207,18 +207,18 @@ class Logic(work.Logic):
     return set([project.mentor for project in sum(
     (list(mentor.student_projects.run())
     for mentor in user_mentors), []) if project.key() == project.key()])
-          
-    
-      
+
+
+
   def activateGrades(self, survey):
     """ Gets survey key name from a request path
-    params: 
+    params:
     survey = survey entity
     """
     if survey.taking_access != "mentor evaluation":
-      logging.error("Cannot grade survey %s with taking access %s" 
+      logging.error("Cannot grade survey %s with taking access %s"
       % (survey.key().name(), survey.taking_access))
-      return False 
+      return False
     program = survey.scope
     for project in program.student_projects.fetch(1000):
       this_record_group = SurveyRecordGroup.all().filter(
@@ -243,21 +243,21 @@ class Logic(work.Logic):
          logging.warning('project %s record group should not \
          yet have a final status %s' % (
          project.key().name(), this_record_group.final_status ) )
-         continue      
-      
+         continue
+
       # assign the new status to the project and surveyrecordgroup
       project.status = new_project_status
       this_record_group.final_status = new_project_status
-      
-      
-      
-       
-      
-      
-      
-     
-    
-      
+
+
+
+
+
+
+
+
+
+
   def getKeyNameFromPath(self, path):
     """ Gets survey key name from a request path
     params:
@@ -319,7 +319,7 @@ class Logic(work.Logic):
     import soc.models.student
     from soc.logic.models.student import logic as student_logic
     #TODO: filter for accepted, midterm_passed, etc?
-    user_students = student_logic.getForFields({'user': user}) 
+    user_students = student_logic.getForFields({'user': user})
     if not user_students: return []
     return [project for project in sum((list(u.student_projects.run()
     ) for u in user_students), []
@@ -336,10 +336,10 @@ class Logic(work.Logic):
     import soc.models.mentor
     from soc.logic.models.mentor import logic as mentor_logic
     #TODO: filter for accepted, midterm_passed, etc?
-    user_mentors = mentor_logic.getForFields({'user': user}) 
+    user_mentors = mentor_logic.getForFields({'user': user})
     if not user_mentors: return []
     return [project for project in sum(
-    (list(u.student_projects.run()) 
+    (list(u.student_projects.run())
     for u in user_mentors), []) if project.program.key() == program.key()]
 
   def getKeyValuesFromEntity(self, entity):
