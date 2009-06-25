@@ -731,10 +731,27 @@ class View(base.View):
       # user cannot see this page, return error response
       return entity
 
+    can_write = False
+    rights = self._params['rights']
+    try:
+      rights.checkIsSurveyWritable({'key_name': entity.key().name(),
+                                    'prefix': entity.prefix,
+                                    'scope_path': entity.scope_path,
+                                    'link_id': entity.link_id,},
+                                   'key_name')
+      can_write = True
+    except out_of_band.AccessViolation:
+      pass
+
     user = user_logic.getForCurrentAccount()
 
     filter = self._params.get('filter') or {}
-    filter.update({'user': user, 'survey': entity})
+
+    # if user can edit the survey, show everyone's results
+    if can_write:
+      filter['survey'] = entity
+    else:
+      filter.update({'user': user, 'survey': entity})
 
     limit = self._params.get('limit') or 1000
     offset = self._params.get('offset') or 0
