@@ -599,7 +599,6 @@ class View(base.View):
         <option>Pass/Fail</option>
       </select></td></tr>
     """
-
     self._entity = entity
     survey_content = entity.survey_content
     user = user_logic.getForCurrentAccount()
