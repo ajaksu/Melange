@@ -56,6 +56,7 @@ from soc.views.models import base
 CHOICE_TYPES = set(('selection', 'pick_multi', 'choice', 'pick_quant'))
 TEXT_TYPES = set(('long_answer', 'short_answer'))
 PROPERTY_TYPES = tuple(CHOICE_TYPES) + tuple(TEXT_TYPES)
+
 _short_answer = ("Short Answer",
                 "Less than 40 characters. Rendered as a text input. "
                 "It's possible to add a free form question (Content) "
@@ -73,6 +74,10 @@ _long_answer = ("Long Answer",
                  "an in-input prompt/example text.")
 QUESTION_TYPES = dict(short_answer=_short_answer, long_answer=_long_answer,
                       choice=_choice)
+
+# for to_csv and View.exportSerialized
+FIELDS = 'author modified_by'
+PLAIN = 'is_featured content created modified'
 
 
 class View(base.View):
@@ -110,13 +115,13 @@ class View(base.View):
     new_params['extra_django_patterns'] = [
         (r'^%(url_name)s/(?P<access_type>activate)/%(scope)s$',
          'soc.views.models.%(module_name)s.activate',
-         'Activate grades %(name)s'),
-         (r'^%(url_name)s/(?P<access_type>grade)/%(scope)s$',
-         'soc.views.models.%(module_name)s.grade',
-         'Grade a list of results %(name)s'),
+         'Activate grades for %(name)s'),
+         (r'^%(url_name)s/(?P<access_type>json)/%(scope)s$',
+         'soc.views.models.%(module_name)s.json',
+         'Export %(name)s as JSON'),
         (r'^%(url_name)s/(?P<access_type>results)/%(scope)s$',
          'soc.views.models.%(module_name)s.results',
-         'View survey results %(name)s'),
+         'View survey results for %(name)s'),
         ]
 
     new_params['export_content_type'] = 'text/text'
@@ -217,6 +222,14 @@ class View(base.View):
     we have a special read_only UI and a check on the POST handler for this.
     Passing read_only=True here allows one to fetch the read_only view.
     """
+
+    # check ACL
+    rights = self._params['rights']
+    rights.checkIsSurveyReadable({'key_name': entity.key().name(),
+                                  'prefix': entity.prefix,
+                                  'scope_path': entity.scope_path,
+                                  'link_id': entity.link_id,},
+                                 'key_name')
 
     survey = entity
     user = user_logic.getForCurrentAccount()
@@ -704,34 +717,18 @@ class View(base.View):
     survey_logic.activateGrades(survey)
     return
 
-
   @decorators.merge_params
   @decorators.check_access
   def viewResults(self, request, access_type, page_name=None,
                   params=None, **kwargs):
+    """View for SurveyRecord and SurveyRecordGroup.
     """
-    """
 
-    context = responses.getUniversalContext(request)
-    responses.useJavaScript(context, params['js_uses_all'])
-    context['page_name'] = page_name
-    entity = None
+    entity, context = self.getContextEntity(request, params, kwargs)
 
-    # TODO(ajaksu) there has to be a better way in this universe to get these
-    kwargs['prefix'] = 'program'
-    kwargs['link_id'] = request.path.split('/')[-1]
-    kwargs['scope_path'] = '/'.join(request.path.split('/')[4:-1])
-
-    try:
-      entity = survey_logic.getFromKeyFieldsOr404(kwargs)
-    except out_of_band.Error, error:
-      return responses.errorResponse(
-          error, request, template=params['error_public'], context=context)
-
-    if not self._public(request, entity, context):
-      redirect = params['public_redirect']
-      if redirect:
-        return http.HttpResponseRedirect(redirect)
+    if context is None:
+      # user cannot see this page, return error response
+      return entity
 
     user = user_logic.getForCurrentAccount()
 
@@ -755,6 +752,53 @@ class View(base.View):
     template = 'soc/survey/results_page.html'
     return responses.respond(request, template, context=context)
 
+  @decorators.merge_params
+  @decorators.check_access
+  def exportSerialized(self, request, access_type, page_name=None,
+                       params=None, **kwargs):
+
+    sur, context = self.getContextEntity(request, page_name, params, kwargs)
+
+    if context is None:
+      # user cannot see this page, return error response
+      return sur
+
+    json = sur.toDict()
+    json.update(dict((f, str(getattr(sur, f))) for f in PLAIN.split()))
+    static = ((f, str(getattr(sur, f).link_id)) for f in FIELDS.split())
+    json.update(dict(static))
+
+    dynamic = sur.survey_content.dynamic_properties()
+    content = ((prop, getattr(sur.survey_content, prop)) for prop in dynamic)
+    json['survey_content'] = dict(content)
+
+    schema =  sur.survey_content.schema
+    json['survey_content']['schema'] = eval(sur.survey_content.schema)
+
+    data = simplejson.dumps(json, indent=2)
+
+    return self.json(request, data=json)
+
+  def getContextEntity(self, request, page_name, params, kwargs):
+    context = responses.getUniversalContext(request)
+    responses.useJavaScript(context, params['js_uses_all'])
+    context['page_name'] = page_name
+    entity = None
+
+    # TODO(ajaksu) there has to be a better way in this universe to get these
+    kwargs['prefix'] = 'program'
+    kwargs['link_id'] = request.path.split('/')[-1]
+    kwargs['scope_path'] = '/'.join(request.path.split('/')[4:-1])
+
+    entity = survey_logic.getFromKeyFieldsOr404(kwargs)
+
+    if not self._public(request, entity, context):
+      error = out_of_band.Error('')
+      error = responses.errorResponse(
+          error, request, template=params['error_public'], context=context)
+      return error, None
+
+    return entity, context
 
 class HelperForm(object):
   """Thin wrapper for adding values to params['edit_form'].fields.
@@ -777,19 +821,11 @@ class HelperForm(object):
     return form
 
 
-FIELDS = 'author modified_by'
-PLAIN = 'is_featured content created modified'
-
-
 def _get_csv_header(sur):
   """CSV header helper, needs support for comment lines in CSV.
   """
 
   tpl = '# %s: %s\n'
-
-  json = sur.toDict()
-  json.update(dict((f, str(getattr(sur, f))) for f in PLAIN.split()))
-  json.update(dict((f, str(getattr(sur, f).link_id)) for f in FIELDS.split()))
 
   # add static properties
   fields = ['# Melange Survey export for \n#  %s\n#\n' % sur.title]
@@ -804,20 +840,11 @@ def _get_csv_header(sur):
   dynamic = [(prop, getattr(sur.survey_content, prop)) for prop in dynamic]
   fields += [tpl % (k,v) for k,v in sorted(dynamic)]
 
-  dynamic = sur.survey_content.dynamic_properties()
-  content = ((prop, getattr(sur.survey_content, prop)) for prop in dynamic)
-  json['survey_content'] = dict(content)
-
   # add schema
   fields += ['#\n#---\n#\n']
   schema =  sur.survey_content.schema
-  json['survey_content']['schema'] = eval(sur.survey_content.schema)
   indent = '},\n#' + ' ' * 9
   fields += [tpl % ('Schema', schema.replace('},', indent)) + '#\n']
-
-  # add JSON version
-  fields += ['#\n#---\n#\n']
-  fields += simplejson.dumps(json, indent=2).replace('\n', '\n#') + '\n#\n'
 
   return ''.join(fields).replace('\n', '\r\n')
 
@@ -875,3 +902,4 @@ export = decorators.view(view.export)
 pick = decorators.view(view.pick)
 activate = decorators.view(view.activate)
 results = decorators.view(view.viewResults)
+json = decorators.view(view.exportSerialized)
