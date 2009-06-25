@@ -157,7 +157,7 @@ class SurveyForm(djangoforms.ModelForm):
     widget = widgets.Textarea(attrs=attrs)
 
     if not tip:
-      tip = 'Testing Tooltip!'
+      tip = 'Please provide a long answer to this question.'
 
     question = CharField(help_text=tip, required=req, label=label,
                          widget=widget, initial=value)
@@ -171,7 +171,7 @@ class SurveyForm(djangoforms.ModelForm):
     widget = widgets.TextInput(attrs=attrs)
 
     if not tip:
-      tip = 'Testing Tooltip!'
+      tip = 'Please provide a short answer to this question.'
 
     #TODO(ajaksu) max_length should be configurable
     question = CharField(help_text=tip, required=req, label=label,
@@ -204,7 +204,7 @@ class SurveyForm(djangoforms.ModelForm):
     for option in options:
       these_choices.append((option, option))
     if not tip:
-      tip = 'Testing Tooltip!'
+      tip = 'Please select an answer this question.'
 
     question = PickOneField(help_text=tip, required=req, label=label,
                             choices=tuple(these_choices), widget=widget)
@@ -233,7 +233,7 @@ class SurveyForm(djangoforms.ModelForm):
 
     these_choices = [(v,v) for v in getattr(self.survey_content, field)]
     if not tip:
-      tip = 'Testing Tooltip for Multiple Choices!'
+      tip = 'Please select one or more of these choices.'
 
     question = PickManyField(help_text=tip, required=req, label=label,
                              choices=tuple(these_choices), widget=widget,
@@ -261,7 +261,7 @@ class SurveyForm(djangoforms.ModelForm):
 
     these_choices = [(v,v) for v in getattr(self.survey_content, field)]
     if not tip:
-      tip = 'Testing Tooltip for Multiple Choices!'
+      tip = 'Please select one of these choices.'
 
     question = PickQuantField(help_text=tip, required=req, label=label,
                              choices=tuple(these_choices), widget=widget,

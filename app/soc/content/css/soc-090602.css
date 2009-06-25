@@ -752,6 +752,10 @@ div #survey_widget select {
   font-size: 62.5%;
 }
 
+#dialog input {
+  margin: 5px;
+}
+
 #dialog label, #dialog input {
   display:block;
 }
