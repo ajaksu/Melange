@@ -109,7 +109,7 @@ class Logic(work.Logic):
     if 'evaluation' in survey.taking_access and create:
       if not project: return False
       role = self.getUserRole(user, survey, project)
-      survey_record_group = self.setSurveyRecordGroup(role, survey,
+      survey_record_group = self.setSurveyRecordGroup(survey,
       survey_record, project)
       if survey_record_group:  db.put(survey_record_group)
     return survey_record
