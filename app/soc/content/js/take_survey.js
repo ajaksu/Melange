@@ -78,7 +78,7 @@
     *
     */
 
-  // remember if form has been touched
+    // remember if form has been touched
     $('input,textarea,select').change(
       function () {
         if ($(this).attr('id') === 'id_project') {

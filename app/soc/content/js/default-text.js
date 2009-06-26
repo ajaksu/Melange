@@ -69,7 +69,7 @@
             input.val("");
           }
           input.css("color", defaultColor);
-        };
+        }
 
         function insertMessage() {
           if (input.val().length === 0 || input.val() === text) {
@@ -79,7 +79,7 @@
           else {
             input.css("color", defaultColor);
           }
-        };
+        }
 
         input.focus(clearMessage);
         input.blur(insertMessage);

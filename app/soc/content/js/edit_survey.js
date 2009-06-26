@@ -19,12 +19,6 @@
 * @author <a href="mailto:jamesalexanderlevy@gmail.com">James Levy</a>
 */
 
-var del_li = ["<a class='delete_item' id='del_",
-              "' ><img src='/soc/content/images/minus.gif'/></a> "];
-var del_el = ["<a class='delete'><img '",
-              "src='/soc/content/images/minus.gif'/></a>"].join("");
-var SURVEY_PREFIX = 'survey__';
-
 (function ($) {
 
   var DEFAULT_LONG_ANSWER_TEXT = 'Write a Custom Prompt For This Question...';
@@ -58,6 +52,12 @@ var SURVEY_PREFIX = 'survey__';
     *  if POST fails
     */
 
+    var SURVEY_PREFIX = 'survey__';
+    var del_el = ["<a class='delete'><img '",
+                  "src='/soc/content/images/minus.gif'/></a>"].join("");
+    var del_li = ["<a class='delete_item' id='del_",
+                  "' ><img src='/soc/content/images/minus.gif'/></a> "];
+
     var survey_html = $('form').find("#id_survey_html").attr('value');
 
     function renderHTML() {
@@ -89,9 +89,11 @@ var SURVEY_PREFIX = 'survey__';
     if (survey_html && survey_html.length > 1) {
       widget.html(survey_html); // we don't need to re-render HTML
 
-      widget.find('.long_answer,input').each(function () {
-        $(this).val($(this).attr('val'));
-      });
+      widget.find('.long_answer,input').each(
+        function () {
+          $(this).val($(this).attr('val'));
+        }
+      );
     }
     else {
       renderHTML();
@@ -356,14 +358,27 @@ var SURVEY_PREFIX = 'survey__';
         );
 
         // get rid of the options
-        $('input#id_s_html').val(widget.find('div#survey_options').remove()
-        .end().html());
+        $('input#id_s_html')
+        .val(
+          widget
+          .find(
+            'div#survey_options'
+          )
+          .remove()
+          .end()
+          .html()
+        );
         // only needed for HTML
 
         // Get option order per field
         survey.find('.sortable').each(
           function () {
-            $('#order_for_' + this.id).val($(this).sortable('serialize'));
+            $('#order_for_' + this.id)
+            .val(
+              $(this).sortable(
+                'serialize'
+              )
+            );
           }
         );
       }
@@ -426,6 +441,8 @@ var SURVEY_PREFIX = 'survey__';
 
 (function ($) {
   $(function () {
+  var del_li = ["<a class='delete_item' id='del_",
+                "' ><img src='/soc/content/images/minus.gif'/></a> "];
 
     // Confirmation dialog for deleting list/choice-field item from survey
     $("#delete_item_dialog").dialog({
@@ -474,7 +491,14 @@ var SURVEY_PREFIX = 'survey__';
             '__field" name="', id_, '__field" value="', name, '" >', '</li>'
           ].join(""));
 
-          ol.append(option_html.prepend(del_li.join(option_html.attr('id'))));
+          ol.append(
+            option_html
+            .prepend(
+              del_li.join(
+                option_html.attr('id')
+              )
+            )
+          );
           ol.sortable().disableSelection();
           $('#new_item_name').val('');
           $('#new_item_field_ol_id').val('');
@@ -494,6 +518,12 @@ var SURVEY_PREFIX = 'survey__';
 (function ($) {
   $(function () {
     //  Dialog for adding new question to survey
+    var SURVEY_PREFIX = 'survey__';
+    var del_el = ["<a class='delete'><img '",
+              "src='/soc/content/images/minus.gif'/></a>"].join("");
+    var del_li = ["<a class='delete_item' id='del_",
+                  "' ><img src='/soc/content/images/minus.gif'/></a> "];
+
 
     var widget = $('div#survey_widget');
     var survey = widget.find('tbody:first');
@@ -594,8 +624,19 @@ var SURVEY_PREFIX = 'survey__';
                   'id': 'id_' + formatted_name,
                   'name': formatted_name
                 });
-                field_template.find('label').attr('for', 'NEW_' + name)
-                .append(question_content).end().find('td').append(new_field);
+                field_template
+                .find(
+                  'label'
+                )
+                .attr(
+                  'for',
+                  'NEW_' + name
+                )
+                .append(question_content).end()
+                .find(
+                  'td'
+                )
+                .append(new_field);
                 survey_table.append(field_template).end();
 
                 if (question_options) {
@@ -635,9 +676,17 @@ var SURVEY_PREFIX = 'survey__';
                   'id': 'id_' + formatted_name,
                   'name': formatted_name
                 });
-                field_template.find('label')
-                .attr('for', 'id_' + formatted_name)
-                .append(question_content + ":").end().find('td')
+                field_template.find(
+                  'label'
+                )
+                .attr(
+                  'for',
+                  'id_' + formatted_name
+                )
+                .append(question_content + ":").end()
+                .find(
+                  'td'
+                )
                 .append(new_field).append($(question_for));
 
                 survey_table.append(field_template);

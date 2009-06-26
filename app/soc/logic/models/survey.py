@@ -282,7 +282,10 @@ class Logic(work.Logic):
     # just for testing purposes
     if getMelangeVersion() == 'devvin':
       user = self.getDebugUser(survey, this_program)
-      logging.info(str(user.__dict__))
+      if user:
+        logging.info(str(user.__dict__))
+      else:
+        return False
     if 'mentor' in survey.taking_access:
       these_projects = self.getMentorProjects(user, this_program)
     if 'student' in survey.taking_access:

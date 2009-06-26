@@ -428,6 +428,7 @@ class View(base.View):
 
     # save survey_content for existent survey or pass for creating a new one
     if entity:
+      entity.modified_by = user
       entity.survey_content = survey_content
       db.put(entity)
     else:
@@ -809,9 +810,10 @@ class View(base.View):
     # keywords can't be unicode
     keywords = {}
     for key, val in json.items():
-      fields[str(key)] = val
-    keywords['is_featured'] = eval(keywords['is_featured'])
-    return fields, schema, survey_content
+      keywords[str(key)] = val
+    if 'is_featured' in keywords:
+      keywords['is_featured'] = eval(keywords['is_featured'])
+    return keywords, schema, survey_content
 
   def getContextEntity(self, request, page_name, params, kwargs):
     context = responses.getUniversalContext(request)
