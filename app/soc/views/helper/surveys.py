@@ -38,7 +38,8 @@ from google.appengine.ext.db import djangoforms
 
 from soc.logic import dicts
 from soc.logic.lists import Lists
-from soc.logic.models.survey import logic as survey_logic, results_logic
+from soc.logic.models.survey import logic as survey_logic
+from soc.logic.models.survey import results_logic
 from soc.models.survey import SurveyContent
 
 
@@ -123,7 +124,9 @@ class SurveyForm(djangoforms.ModelForm):
         value = getattr(self.survey_content, field)
 
       if field not in schema:
-        continue # TODO(ajaksu) should we error here?
+        logging.error('field %s not found in schema %s' %
+        (field, str(schema) ) )
+        continue 
       elif 'question' in schema[field]:
         label = schema[field].get('question', None) or field
       else:
@@ -166,6 +169,16 @@ class SurveyForm(djangoforms.ModelForm):
   def addLongField(self, field, value, attrs, req=False, label='', tip='',
                    comment=''):
     """Add a long answer fields to this form.
+    
+    params:
+    field - the current field
+    value - the initial value for this field
+    attrs - additional attributes for field
+    req - required bool
+    label - label for field
+    tip - tooltip text for field
+    comment - initial comment value for field 
+    
     """
 
     widget = widgets.Textarea(attrs=attrs)
@@ -187,6 +200,16 @@ class SurveyForm(djangoforms.ModelForm):
   def addShortField(self, field, value, attrs, req=False, label='', tip='',
                     comment=''):
     """Add a short answer fields to this form.
+    
+    params:
+    field - the current field
+    value - the initial value for this field
+    attrs - additional attributes for field
+    req - required bool
+    label - label for field
+    tip - tooltip text for field
+    comment - initial comment value for field 
+    
     """
 
     attrs['class'] = "text_question"
@@ -195,9 +218,8 @@ class SurveyForm(djangoforms.ModelForm):
     if not tip:
       tip = 'Please provide a short answer to this question.'
 
-    #TODO(ajaksu) max_length should be configurable
     question = CharField(help_text=tip, required=req, label=label,
-                         widget=widget, max_length=40, initial=value)
+                         widget=widget, max_length=140, initial=value)
     self.survey_fields[field] = question
 
     if not self.editing:
@@ -211,7 +233,16 @@ class SurveyForm(djangoforms.ModelForm):
                      tip='', comment=''):
     """Add a selection field to this form.
 
-    Widget depends on whether we're editing or displaying the survey taking UI.
+    params:
+    field - the current field
+    value - the initial value for this field
+    attrs - additional attributes for field
+    schema - schema for survey
+    req - required bool
+    label - label for field
+    tip - tooltip text for field
+    comment - initial comment value for field 
+    
     """
 
     if self.editing:
@@ -250,7 +281,16 @@ class SurveyForm(djangoforms.ModelForm):
                     tip='', comment=''):
     """Add a pick_multi field to this form.
 
-    Widget depends on whether we're editing or displaying the survey taking UI.
+    params:
+    field - the current field
+    value - the initial value for this field
+    attrs - additional attributes for field
+    schema - schema for survey
+    req - required bool
+    label - label for field
+    tip - tooltip text for field
+    comment - initial comment value for field 
+    
     """
 
     if self.editing:
@@ -286,7 +326,16 @@ class SurveyForm(djangoforms.ModelForm):
                     tip='', comment=''):
     """Add a pick_quant field to this form.
 
-    Widget depends on whether we're editing or displaying the survey taking UI.
+    params:
+    field - the current field
+    value - the initial value for this field
+    attrs - additional attributes for field
+    schema - schema for survey
+    req - required bool
+    label - label for field
+    tip - tooltip text for field
+    comment - initial comment value for field 
+    
     """
 
     if self.editing:
@@ -339,6 +388,8 @@ class UniversalChoiceEditor(widgets.Widget):
     self.render_as = render
 
   def render(self, name, value, attrs=None, choices=()):
+    """ renders UCE widget
+    """
 
     if value is None:
       value = ''
@@ -372,6 +423,7 @@ class UniversalChoiceEditor(widgets.Widget):
 class PickOneField(forms.ChoiceField):
   """Stub for customizing the single choice field.
   """
+  #TODO(james): Ensure that more than one option cannot be selected
 
   def __init__(self, *args, **kwargs):
     super(PickOneField, self).__init__(*args, **kwargs)
@@ -388,6 +440,7 @@ class PickManyField(forms.MultipleChoiceField):
 class PickQuantField(forms.MultipleChoiceField):
   """Stub for customizing the multiple choice field.
   """
+  #TODO(james): Ensure that more than one quant cannot be selected
 
   def __init__(self, *args, **kwargs):
     super(PickQuantField, self).__init__(*args, **kwargs)
@@ -489,6 +542,18 @@ class SurveyResults(widgets.Widget):
 
   def render(self, survey, params, filter=filter, limit=1000, offset=0,
              order=[], idx=0, context={}):
+    """ renders list of survey results
+    
+    params:
+    survey - current survey
+    params - dict of params for rendering list
+    filter - filter for list results
+    limit - limit for list results
+    offset - offset for list results
+    order - order for list results
+    idx - index for list results
+    context - context dict for template
+    """
     logic = results_logic
     filter = {'survey': survey}
     data = logic.getForFields(filter=filter, limit=limit, offset=offset,
@@ -535,7 +600,22 @@ class SurveyResults(widgets.Widget):
 
 
 def getRoleSpecificFields(survey, user, this_project, survey_form, survey_record):
-  # Serves as both access handler and retrieves projects for selection
+  """
+  For evaluations, mentors get required Project and Grade fields, and 
+  students get a required Project field. 
+  
+  Because we need to get a list of the user's projects, we call the 
+  logic getProjects method, which doubles as an access check.
+  (No projects means that the survey cannot be taken.)
+  
+  params:
+  survey - the survey being taken
+  user - the survey-taking user
+  this_project - either an already-selected project, or None
+  survey_form - the surveyForm widget for this survey
+  survey_record - an existing survey record for a user-project-survey combo,
+  or None
+  """
   from django import forms
   field_count = len(eval(survey.survey_content.schema).items())
   these_projects = survey_logic.getProjects(survey, user)
