@@ -30,7 +30,8 @@ from soc.logic.models.news_feed import logic as newsfeed_logic
 from soc.models.program import Program
 from soc.models import student_project
 from soc.cache import sidebar
-from soc.models.survey import SurveyContent, Survey
+from soc.models.survey import Survey
+from soc.models.survey import SurveyContent
 from soc.models.survey_record import SurveyRecord
 from soc.models.survey_record_group import SurveyRecordGroup
 from soc.logic.models.user import logic as user_logic
@@ -177,7 +178,6 @@ class Logic(work.Logic):
         user.key().name(), str(students)) )
         return False
       this_student = students[0]
-
 
   def getStudentforProject(self, user, project):
     """ get student projects for a student

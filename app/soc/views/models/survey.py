@@ -122,6 +122,9 @@ class View(base.View):
         (r'^%(url_name)s/(?P<access_type>results)/%(scope)s$',
          'soc.views.models.%(module_name)s.results',
          'View survey results for %(name)s'),
+        (r'^%(url_name)s/(?P<access_type>show)/user/(?P<link_id>)\w+$',
+         'soc.views.models.%(module_name)s.results',
+         'View survey results for user'),
         ]
 
     new_params['export_content_type'] = 'text/text'
@@ -726,47 +729,55 @@ class View(base.View):
     """View for SurveyRecord and SurveyRecordGroup.
     """
 
-    entity, context = self.getContextEntity(request, page_name, params, kwargs)
-
-    if context is None:
-      # user cannot see this page, return error response
-      return entity
-
-    can_write = False
-    rights = self._params['rights']
-    try:
-      rights.checkIsSurveyWritable({'key_name': entity.key().name(),
-                                    'prefix': entity.prefix,
-                                    'scope_path': entity.scope_path,
-                                    'link_id': entity.link_id,},
-                                   'key_name')
-      can_write = True
-    except out_of_band.AccessViolation:
-      pass
-
     user = user_logic.getForCurrentAccount()
 
-    filter = self._params.get('filter') or {}
-
-    # if user can edit the survey, show everyone's results
-    if can_write:
-      filter['survey'] = entity
+    # TODO(ajaksu) use the named parameter link_id from the re
+    if request.path == '/survey/show/user/' + user.link_id:
+      records = tuple(user.surveys_taken.run())
+      context = responses.getUniversalContext(request)
+      context['content'] = records[0].survey.survey_content
+      responses.useJavaScript(context, params['js_uses_all'])
+      context['page_name'] = u'Your survey records.'
     else:
-      filter.update({'user': user, 'survey': entity})
+      entity, context = self.getContextEntity(request, page_name,
+                                              params, kwargs)
 
-    limit = self._params.get('limit') or 1000
-    offset = self._params.get('offset') or 0
-    order = self._params.get('order') or []
-    idx = self._params.get('idx') or 0
+      if context is None:
+        # user cannot see this page, return error response
+        return entity
+      context['content'] = entity.survey_content
+      can_write = False
+      rights = self._params['rights']
+      try:
+        rights.checkIsSurveyWritable({'key_name': entity.key().name(),
+                                      'prefix': entity.prefix,
+                                      'scope_path': entity.scope_path,
+                                      'link_id': entity.link_id,},
+                                     'key_name')
+        can_write = True
+      except out_of_band.AccessViolation:
+        pass
 
-    records = results_logic.getForFields(filter=filter, limit=limit,
-                                      offset=offset, order=order)
+      filter = self._params.get('filter') or {}
+
+      # if user can edit the survey, show everyone's results
+      if can_write:
+        filter['survey'] = entity
+      else:
+        filter.update({'user': user, 'survey': entity})
+
+      limit = self._params.get('limit') or 1000
+      offset = self._params.get('offset') or 0
+      order = self._params.get('order') or []
+      idx = self._params.get('idx') or 0
+
+      records = results_logic.getForFields(filter=filter, limit=limit,
+                                        offset=offset, order=order)
 
     updates = dicts.rename(params, params['list_params'])
     context.update(updates)
 
     context['results'] = records, records
-    context['content'] = entity.survey_content
 
     template = 'soc/survey/results_page.html'
     return responses.respond(request, template, context=context)
