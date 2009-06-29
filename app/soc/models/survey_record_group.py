@@ -27,6 +27,7 @@ __authors__ = [
 
 
 from google.appengine.ext import db
+
 from soc.models.survey_record import SurveyRecord
 import soc.models.user
 
@@ -50,16 +51,19 @@ class SurveyRecordGroup(db.Expando):
 
   
   """
-  # get survey by threading through record:
-  # survey = survey_record_group.mentor_record.survey
+  # mentor SurveyRecord for this evaluation
   mentor_record = db.ReferenceProperty(SurveyRecord, required=False,
                               collection_name='mentor_record_groups')
+  # student SurveyRecord for this evaluation
   student_record = db.ReferenceProperty(SurveyRecord, required=False,
                               collection_name='student_record_groups')
+  # project for this evaluation
   project = db.ReferenceProperty(soc.models.student_project.StudentProject,
                                 collection_name="survey_record_groups",
                                 required=True)
+  # status of project at start of evaluation
   initial_status = db.StringProperty(required=True)
+  # status of project at end of evaluation
   final_status = db.StringProperty(required=False)
   created = db.DateTimeProperty(auto_now_add=True)
   modified = db.DateTimeProperty(auto_now=True)

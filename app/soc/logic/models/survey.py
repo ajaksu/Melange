@@ -24,19 +24,21 @@ __authors__ = [
 
 
 from google.appengine.ext import db
-from soc.logic.models import linkable as linkable_logic
 import logging
+
+from soc.cache import sidebar
+from soc.logic.models import linkable as linkable_logic
 from soc.logic.models.news_feed import logic as newsfeed_logic
+from soc.logic.models.user import logic as user_logic
+from soc.logic.models import work
 from soc.models.program import Program
 from soc.models import student_project
-from soc.cache import sidebar
 from soc.models.survey import SurveyContent, Survey
 from soc.models.survey_record import SurveyRecord
 from soc.models.survey_record_group import SurveyRecordGroup
-from soc.logic.models.user import logic as user_logic
 from soc.models.work import Work
-from soc.logic.models import work
 
+#TODO(James): Ensure this facilitates variable # of surveys 
 GRADES = {'pass': True, 'fail': False}
 PROJECT_STATUSES = {
 'accepted': {True: 'mid_term_passed', False: 'mid_term_failed'},
@@ -83,7 +85,6 @@ class Logic(work.Logic):
     survey_record = existing record, if one exists
     fields = submitted responses to survey fields
     """
-
     if survey_record:
       create = False
       for prop in survey_record.dynamic_properties():
@@ -178,7 +179,6 @@ class Logic(work.Logic):
         return False
       this_student = students[0]
 
-
   def getStudentforProject(self, user, project):
     """ get student projects for a student
     params:
@@ -208,8 +208,6 @@ class Logic(work.Logic):
     return set([project.mentor for project in sum(
     (list(mentor.student_projects.run())
     for mentor in user_mentors), []) if project.key() == project.key()])
-
-
 
   def activateGrades(self, survey):
     """ Gets survey key name from a request path
@@ -245,31 +243,21 @@ class Logic(work.Logic):
          yet have a final status %s' % (
          project.key().name(), this_record_group.final_status ) )
          continue
-
       # assign the new status to the project and surveyrecordgroup
       project.status = new_project_status
       this_record_group.final_status = new_project_status
 
-
-
-
-
-
-
-
-
-
   def getKeyNameFromPath(self, path):
     """ Gets survey key name from a request path
+    
     params:
     path = current path
     """
     return '/'.join(path.split('/')[-4:]).split('?')[0]
 
-
   def getProjects(self, survey, user):
-    """
-    Get projects linking user to a program.
+    """ Get projects linking user to a program.
+    
     Serves as access handler (since no projects == no access)
     And retrieves projects to choose from (if mentors have >1 projects)
     params:
@@ -296,8 +284,9 @@ class Logic(work.Logic):
     return these_projects
 
   def getDebugUser(self, survey, this_program):
-    """debugging method impersonates other roles to test
-    taking survey, saving response, and grading.
+    """Debugging method impersonates other roles
+    
+    T ests taking survey, saving response, and grading.
     params:
     survey = survey entity
     this_program = program scope of survey
@@ -314,8 +303,7 @@ class Logic(work.Logic):
     if role: return role.user
 
   def getStudentProjects(self, user, program):
-    """
-    get student projects for a student
+    """Get student projects for a student
     params:
     user = survey taking user
     program = program scope for survey
@@ -329,10 +317,9 @@ class Logic(work.Logic):
     ) for u in user_students), []
     ) if project.program.key() == program.key()]
 
-
   def getMentorProjects(self, user, program):
-    """
-    get student projects for a mentor
+    """Get student projects for a mentor
+    
     params:
     user = survey taking user
     program = program scope for survey
@@ -381,7 +368,6 @@ class Logic(work.Logic):
       sidebar.flush()
     return True
 
-
   def getScope(self, entity):
     """gets Scope for entity
     params:
@@ -419,15 +405,11 @@ class Logic(work.Logic):
   def _onDelete(self, entity):
     receivers = [entity.scope]
     newsfeed_logic.addToFeed(entity, receivers, "deleted")
-
-
+    
 logic = Logic()
 
-
-
-
 class ResultsLogic(work.Logic):
-  """Logic methods for the Survey model
+  """Logic methods for listing results for Surveys.
   """
 
   def __init__(self, model=SurveyRecord,
@@ -438,55 +420,14 @@ class ResultsLogic(work.Logic):
     super(ResultsLogic, self).__init__(model=model, base_model=base_model,
                                 scope_logic=scope_logic)
 
-  def getKeyValuesFromEntity(self, entity):
-    """See base.Logic.getKeyNameValues.
-    """
-
-    return [entity.prefix, entity.scope_path, entity.link_id]
-
-  def getKeyValuesFromFields(self, fields):
-    """See base.Logic.getKeyValuesFromFields.
-    """
-
-    return [fields['prefix'], fields['scope_path'], fields['link_id']]
-
-  def getKeyFieldNames(self):
-    """See base.Logic.getKeyFieldNames.
-    """
-
-    return ['prefix', 'scope_path', 'link_id']
-
-  def isDeletable(self, entity):
-    """See base.Logic.isDeletable.
-    """
-
-    return not entity.home_for
-
-  def _updateField(self, entity, entity_properties, name):
-    """Special logic for role. If state changes to active we flush the sidebar.
-    """
-
-    value = entity_properties[name]
-
-    if (name == 'is_featured') and (entity.is_featured != value):
-      sidebar.flush()
-
-    home_for = entity.home_for
-    if (name != 'home_for') and home_for:
-      home.flush(home_for)
-    return True
-
 
 results_logic = ResultsLogic()
-
 
 def notifyStudents(survey):
   """POC for notification, pending mentor-project linking.
   params:
   survey = survey entity
   """
-
-  #TODO: Get this working again
   from soc.models.student import Student
   from soc.models.program import Program
   from soc.logic.helper import notifications

@@ -28,6 +28,7 @@ __authors__ = [
 
 from google.appengine.ext import db
 from django.utils.translation import ugettext
+
 import soc.models.student_project
 from soc.models.survey import Survey
 import soc.models.user

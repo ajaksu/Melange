@@ -28,6 +28,7 @@ __authors__ = [
 
 from google.appengine.ext import db
 from django.utils.translation import ugettext
+
 import soc.models.work
 
 
@@ -91,6 +92,8 @@ class Survey(soc.models.work.Work):
                           'mentor',
                           'student evaluation',
                           'mentor evaluation',
+                          'org_admin',
+                          'user',
                           'public']
   GRADE_OPTIONS = {'midterm':['mid_term_passed', 'mid_term_failed'],
                    'final':['final_passed', 'final_failed'],
