@@ -278,7 +278,7 @@
         '<tr class="role-specific"><th><label>Choose Project:</label></th>',
         '<td> <select disabled=TRUE id="id_survey__NA__selection__project"',
         ' name="survey__1__selection__see"><option>Survey Taker\'s Projects',
-        'For This Program</option></select> </td></tr>'
+        ' For This Program</option></select> </td></tr>'
       ].join("");
 
       var CHOOSE_A_GRADE_FIELD = [
