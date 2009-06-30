@@ -15,45 +15,40 @@
 # limitations under the License.
 
 """SurveyRecord represents a single Survey result.
-
-SurveyRecordGroup represents a cluster (mentor/student) of SurveyRecords
-for an evaluation period.
 """
 
 __authors__ = [
   '"Daniel Diniz" <ajaksu@gmail.com>',
   '"James Levy" <jamesalexanderlevy@gmail.com>',
+  '"Lennard de Rijk" <ljvderijk@gmail.com>',
 ]
 
 
 from google.appengine.ext import db
+
 from django.utils.translation import ugettext
 
-import soc.models.student_project
 from soc.models.survey import Survey
 import soc.models.user
 
 
-
-class SurveyRecord(db.Expando):
+class BaseSurveyRecord(db.Expando):
   """Record produced each time Survey is taken.
 
   Like SurveyContent, this model includes dynamic properties
   corresponding to the fields of the survey.
-
-  This also contains a Binary grade value that can be added/edited
-  by the administrator of the Survey.
   """
 
-  survey = db.ReferenceProperty(Survey, collection_name="survey_records")
+  #: Reference to the User entity which took this survey.
   user = db.ReferenceProperty(reference_class=soc.models.user.User,
                               required=True, collection_name="surveys_taken",
                               verbose_name=ugettext('Created by'))
-  project = db.ReferenceProperty(soc.models.student_project.StudentProject,
-                                 collection_name="survey_records")
+
+  #: Date when this record was created.
   created = db.DateTimeProperty(auto_now_add=True)
+
+  #: Date when this record was last modified.
   modified = db.DateTimeProperty(auto_now=True)
-  grade = db.BooleanProperty(required=False)
 
   def getValues(self):
     """Method to get dynamic property values for a survey record.
@@ -61,15 +56,20 @@ class SurveyRecord(db.Expando):
     Right now it gets all dynamic values, but it could also be confined to
     the SurveyContent entity linked to the survey entity.
     """
-    survey_order = self.survey.survey_content.getSurveyOrder()
+    survey_order = self.getSurvey().survey_content.getSurveyOrder()
     values = []
     for position, property in survey_order.items():
         values.insert(position, getattr(self, property, None))
     return values
 
 
+# TODO(ajaksu) think of a better way to handle the survey reference
+class SurveyRecord(BaseSurveyRecord):
 
+  #: The survey for which this entity is a record.
+  survey = db.ReferenceProperty(Survey, collection_name="survey_records")
 
-
-
-
+  def getSurvey(self):
+    """Returns the Survey belonging to this record.
+    """
+    return self.survey

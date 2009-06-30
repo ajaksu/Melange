@@ -94,7 +94,7 @@ Please use this form to edit the {{ entity_type }}.
     </div>
   </div> {# end survey_widget #}
   </div>
-  
+
   <table>
     <tr>
       <td colspan="4">&nbsp;</td>
@@ -138,7 +138,7 @@ Please use this form to edit the {{ entity_type }}.
             <input id="activate" {% if not passed_deadline %}class="disabled"{% endif %} onclick="if (!$(this).hasClass('disabled')) location.href='/{{ entity_type_url|lower }}/activate/{{ entity_suffix }}'" type="button"  value="Activate Grades"/>
           </td>
           {% endifequal %}
-          
+
         {% endif %}
       {% endblock %}
     </tr>
@@ -152,7 +152,7 @@ Please use this form to edit the {{ entity_type }}.
     <p>
       <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;">
       </span>
-   <div style="width:200px;">  This item will be permanently deleted and cannot be recovered. Are you sure?</div> 
+   <div style="width:200px;">  This item will be permanently deleted and cannot be recovered. Are you sure?</div>
     </p>
   </div>
 

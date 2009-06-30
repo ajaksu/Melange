@@ -110,12 +110,14 @@ def getHomeRedirect(entity, params):
   return '/%s/home/%s' % (
       params['url_name'], entity.key().id_or_name())
 
+
 def getReviewRedirect(entity, params):
   """Returns the redirect to review the specified entity.
   """
 
   return '/%s/review/%s' % (
       params['url_name'], entity.key().id_or_name())
+
 
 def getReviewOverviewRedirect(entity, params):
   """Returns the redirect to the review_overview using the
