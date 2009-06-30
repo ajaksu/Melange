@@ -182,8 +182,12 @@ def getListProjectsRedirect(entity, params):
   """Returns the redirect for the List Projects page for the given entity.
   """
 
+  if isinstance(params, basestring):
+    url_name = params
+  else:
+    url_name = params['url_name']
   result = '/%s/list_projects/%s' % (
-      params['url_name'], entity.key().id_or_name())
+      url_name, entity.key().id_or_name())
 
   return result
 
@@ -359,6 +363,34 @@ def getListSurveysRedirect(entity, prefix):
   """
 
   return '/survey/list/%s/%s' % (prefix, entity.key().id_or_name())
+
+
+def getCreateProjectSurveyRedirect(entity, prefix):
+  """Returns the redirect for new documents.
+  """
+
+  return '/project_survey/create/%s/%s' % (prefix, entity.key().id_or_name())
+
+
+def getListProjectSurveysRedirect(entity, prefix):
+  """Returns the redirect for listing documents.
+  """
+
+  return '/project_survey/list/%s/%s' % (prefix, entity.key().id_or_name())
+
+
+def getCreateGradeSurveyRedirect(entity, prefix):
+  """Returns the redirect for new documents.
+  """
+
+  return '/grade_survey/create/%s/%s' % (prefix, entity.key().id_or_name())
+
+
+def getListGradeSurveysRedirect(entity, prefix):
+  """Returns the redirect for listing documents.
+  """
+
+  return '/grade_survey/list/%s/%s' % (prefix, entity.key().id_or_name())
 
 
 def getListSurveyResultsRedirect(entity, prefix):

@@ -23,6 +23,7 @@ __authors__ = [
 
 
 from soc.logic import dicts
+from soc.logic.models.survey import GRADES
 from soc.logic.models.survey import grading_logic as grading_survey_logic
 from soc.views.helper import access
 from soc.views.helper import decorators
@@ -54,11 +55,33 @@ class View(project_survey.View):
     new_params['logic'] = grading_survey_logic
     new_params['rights'] = rights
 
+    new_params['extra_django_patterns'] = [
+        (r'^%(url_name)s/(?P<access_type>activate)/%(scope)s$',
+         'soc.views.models.%(module_name)s.activate',
+         'Activate grades for %(name)s')]
+
     new_params['name'] = "Grading Project Survey"
 
     params = dicts.merge(params, new_params)
 
     super(View, self).__init__(params=params)
+
+  # TODO(ajaksu) the following two methods should move to GradingProjectSurvey
+  def activate(self, request, **kwargs):
+    """This is a hack to support the 'Enable grades' button.
+    """
+    self.activateGrades(request)
+    redirect_path = request.path.replace('/activate/', '/edit/') + '?activate=1'
+    return http.HttpResponseRedirect(redirect_path)
+
+
+  def activateGrades(self, request, **kwargs):
+    """Updates SurveyRecord's grades for a given Survey.
+    """
+    survey_key_name = survey_logic.getKeyNameFromPath(request.path)
+    survey = Survey.get_by_key_name(survey_key_name)
+    survey_logic.activateGrades(survey)
+    return
 
 
 view = View()

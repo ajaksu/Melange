@@ -32,7 +32,6 @@ class ProjectSurvey(Survey):
 
   def __init__(self, *args, **kwargs):
     super(ProjectSurvey, self).__init__(*args, **kwargs)
-    self.prefix = 'program'
     self.taking_access = 'student'
 
   def getRecords(self):
