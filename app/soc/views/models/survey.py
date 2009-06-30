@@ -138,7 +138,7 @@ class View(base.View):
     new_params['edit_template'] = 'soc/survey/edit.html'
     new_params['create_template'] = 'soc/survey/edit.html'
 
-    # TODO which one of these are leftovers from Document?
+    # TODO: which one of these are leftovers from Document?
     new_params['no_create_raw'] = True
     new_params['no_create_with_scope'] = True
     new_params['no_create_with_key_fields'] = True
@@ -277,7 +277,8 @@ class View(base.View):
     survey_content = survey.survey_content
 
     if not survey_record and read_only:
-      # no recorded answers, we're either past survey_end or want to see answers
+      # no recorded answers, 
+      # we're either past survey_end or want to see answers
       is_same_user = user.key() == user_logic.getForCurrentAccount().key()
 
       if not can_write or not is_same_user:
@@ -411,7 +412,8 @@ class View(base.View):
     if not entity:
       # new Survey
       if 'serialized' in request.POST:
-        fields, schema, survey_fields = self.importSerialized(request, fields, user)
+        fields, schema, survey_fields = self.importSerialized(
+        request, fields, user)
       fields['author'] = user
     else:
       fields['author'] = entity.author
@@ -486,11 +488,11 @@ class View(base.View):
     """Get fields from request.
 
     We use two field/question naming and processing schemes:
-      - Choice questions consist of <input/>s with a common name, being rebuilt
-        anew on every edit POST so we can gather ordering, text changes,
-        deletions and additions.
-      - Text questions only have special survey__* names on creation, afterwards
-        they are loaded from the SurveyContent dynamic properties.
+    - Choice questions consist of <input/>s with a common name, being rebuilt
+      anew on every edit POST so we can gather ordering, text changes,
+      deletions and additions.
+    - Text questions only have special survey__* names on creation, afterwards
+      they are loaded from the SurveyContent dynamic properties.
     """
 
     for key, value in POST.items():
@@ -598,7 +600,7 @@ class View(base.View):
     Builds the SurveyForm that represents the Survey question contents.
     """
 
-    # TODO(ajaksu) Move CHOOSE_A_PROJECT_FIELD and CHOOSE_A_GRADE_FIELD
+    # TODO(ajaksu): Move CHOOSE_A_PROJECT_FIELD and CHOOSE_A_GRADE_FIELD
     # to template.
 
     CHOOSE_A_PROJECT_FIELD = """<tr class="role-specific">
@@ -651,7 +653,8 @@ class View(base.View):
     return super(View, self).editGet(request, entity, context, params=params)
 
   def getMenusForScope(self, entity, params):
-    """List featured surveys if after the survey_start date and before survey_end.
+    """List featured surveys if after the survey_start date 
+    and before survey_end.
     """
 
     # only list surveys for registered users
@@ -681,7 +684,7 @@ class View(base.View):
         params = dict(prefix=entity.prefix, scope_path=entity.scope_path,
                       link_id=entity.link_id, user=user)
 
-        # TODO(ajaksu) use access.Checker.checkIsSurveyReadable
+        # TODO(ajaksu): use access.Checker.checkIsSurveyReadable
         checker = access.rights_logic.Checker(entity.prefix)
         roles = checker.getMembership(entity.read_access)
         rights = self._params['rights']
@@ -691,24 +694,26 @@ class View(base.View):
         survey_rights[entity.read_access] = can_read
 
         if not can_read:
-          pass#continue
+          continue
 
       elif not survey_rights[entity.read_access]:
-        pass#continue
+        continue
 
       # omit if either before survey_start or after survey_end
       if entity.survey_start and entity.survey_start > now:
-        pass#continue
+        continue
 
       if entity.survey_end and entity.survey_end < now:
-        pass#continue
+        continue
 
-      taken_status = ""
-      taken_status = "(new)"
-      #TODO only if a document is readable it might be added
+      survey_record = SurveyRecord.all(
+      ).filter("user =", user
+      ).filter("survey =", entity).get()
+      if survey_record: taken_status = ""
+      else: taken_status = "(new)"
       submenu = (redirects.getPublicRedirect(entity, self._params),
-      'Survey ' +  taken_status + ': ' + entity.short_name,
-      'show')
+                 'Survey ' + taken_status + ': ' + entity.short_name, 
+                 'show')
 
       submenus.append(submenu)
     return submenus
@@ -717,7 +722,8 @@ class View(base.View):
     """This is a hack to support the 'Enable grades' button.
     """
     self.activateGrades(request)
-    redirect_path = request.path.replace('/activate/', '/edit/') + '?activate=1'
+    redirect_path = request.path.replace(
+    '/activate/', '/edit/') + '?activate=1'
     return http.HttpResponseRedirect(redirect_path)
 
 
@@ -740,7 +746,7 @@ class View(base.View):
 
     user = user_logic.getForCurrentAccount()
 
-    # TODO(ajaksu) use the named parameter link_id from the re
+    # TODO(ajaksu): use the named parameter link_id from the re
     if request.path == '/survey/show/user/' + user.link_id:
       records = tuple(user.surveys_taken.run())
       context = responses.getUniversalContext(request)
@@ -841,7 +847,7 @@ class View(base.View):
     context['page_name'] = page_name
     entity = None
 
-    # TODO(ajaksu) there has to be a better way in this universe to get these
+    # TODO(ajaksu): there has to be a better way in this universe to get these
     kwargs['prefix'] = 'program'
     kwargs['link_id'] = request.path.split('/')[-1]
     kwargs['scope_path'] = '/'.join(request.path.split('/')[4:-1])
