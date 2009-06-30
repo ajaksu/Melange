@@ -20,6 +20,7 @@
 __authors__ = [
   '"Daniel Diniz" <ajaksu@gmail.com>',
   '"James Levy" <jamesalexanderlevy@gmail.com>',
+  '"Lennard de Rijk" <ljvderijk@gmail.com>',
   ]
 
 import csv
@@ -37,7 +38,6 @@ from soc.cache import home
 from soc.logic import cleaning
 from soc.logic import dicts
 from soc.logic.models.survey import logic as survey_logic
-from soc.logic.models.survey import results_logic
 from soc.logic.models.survey import GRADES
 from soc.logic.models.user import logic as user_logic
 from soc.models.survey import Survey
@@ -182,7 +182,8 @@ class View(base.View):
         'clean': cleaning.validate_document_acl(self),
         }
 
-    params = dicts.merge(params, new_params)
+    params = dicts.merge(params, new_params, sub_merge=True)
+
     super(View, self).__init__(params=params)
 
   def list(self, request, access_type, page_name=None, params=None,
@@ -288,6 +289,7 @@ class View(base.View):
     survey_form = surveys.SurveyForm(survey_content=survey_content,
                                      this_user=user,
                                      project=project,
+                                     survey_logic=self._params['logic'],
                                      survey_record=survey_record,
                                      read_only=read_only,
                                      editing=False)
@@ -626,7 +628,9 @@ class View(base.View):
 
 
     survey_form = surveys.SurveyForm(survey_content=survey_content,
-                                     this_user=user, project=project, survey_record=survey_record,
+                                     this_user=user, project=project,
+                                     survey_logic=params['logic'],
+                                     survey_record=survey_record,
                                      editing=True, read_only=False)
     survey_form.getFields()
 
@@ -731,6 +735,8 @@ class View(base.View):
                   params=None, **kwargs):
     """View for SurveyRecord and SurveyRecordGroup.
     """
+
+    results_logic = params['logic'].getRecordLogic()
 
     user = user_logic.getForCurrentAccount()
 
