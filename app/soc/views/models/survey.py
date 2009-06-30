@@ -647,7 +647,7 @@ class View(base.View):
     return super(View, self).editGet(request, entity, context, params=params)
 
   def getMenusForScope(self, entity, params):
-    """List featured surveys iff after the survey_start date and before survey_end.
+    """List featured surveys if after the survey_start date and before survey_end.
     """
 
     # only list surveys for registered users
@@ -687,21 +687,24 @@ class View(base.View):
         survey_rights[entity.read_access] = can_read
 
         if not can_read:
-          continue
+          pass#continue
 
       elif not survey_rights[entity.read_access]:
-        continue
+        pass#continue
 
       # omit if either before survey_start or after survey_end
       if entity.survey_start and entity.survey_start > now:
-        continue
+        pass#continue
 
       if entity.survey_end and entity.survey_end < now:
-        continue
+        pass#continue
 
+      taken_status = ""
+      taken_status = "(new)"
       #TODO only if a document is readable it might be added
       submenu = (redirects.getPublicRedirect(entity, self._params),
-                 entity.short_name, 'show')
+      'Survey ' +  taken_status + ': ' + entity.short_name,
+      'show')
 
       submenus.append(submenu)
     return submenus
