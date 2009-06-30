@@ -325,40 +325,40 @@ class SurveyContentSchema(object):
   """Abstract question metadata handling.
   """
 
-    def __init__(self, schema):
-      self.schema = eval(schema)
+  def __init__(self, schema):
+    self.schema = eval(schema)
 
-    def getType(self, field):
-      return self.schema[field]["type"]
+  def getType(self, field):
+    return self.schema[field]["type"]
 
-    def getRender(self, field):
-      return self.schema[field]["render"]
+  def getRender(self, field):
+    return self.schema[field]["render"]
 
-    def getWidget(self, field, editing, attrs):
-      """Get survey editing or taking widget for choice questions.
-      """
+  def getWidget(self, field, editing, attrs):
+    """Get survey editing or taking widget for choice questions.
+    """
 
-      if editing:
-        kind = self.getType(field)
-        render = self.getRender(field)
-        widget = UniversalChoiceEditor(kind, render)
-      else:
-        widget = WIDGETS[self.schema[field]['render']](attrs=attrs)
-      return widget
+    if editing:
+      kind = self.getType(field)
+      render = self.getRender(field)
+      widget = UniversalChoiceEditor(kind, render)
+    else:
+      widget = WIDGETS[self.schema[field]['render']](attrs=attrs)
+    return widget
 
-    def getLabel(self, field):
-      """Fetch the free text 'question' or use field name as label.
-      """
+  def getLabel(self, field):
+    """Fetch the free text 'question' or use field name as label.
+    """
 
-      if field not in self.schema:
-        logging.error('field %s not found in schema %s' %
-                      (field, str(self.schema)))
-        return
-      elif 'question' in self.schema[field]:
-        label = self.schema[field].get('question') or field
-      else:
-        label = field
-      return label
+    if field not in self.schema:
+      logging.error('field %s not found in schema %s' %
+                    (field, str(self.schema)))
+      return
+    elif 'question' in self.schema[field]:
+      label = self.schema[field].get('question') or field
+    else:
+      label = field
+    return label
 
 
 class UniversalChoiceEditor(widgets.Widget):
