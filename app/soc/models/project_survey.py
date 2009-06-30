@@ -14,33 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Student Project (Model) query functions.
+"""This module contains the ProjectSurvey model.
 """
 
 __authors__ = [
+  '"Daniel Diniz" <ajaksu@gmail.com>',
   '"Lennard de Rijk" <ljvderijk@gmail.com>',
-  ]
+]
 
 
-from soc.logic.models import base
-from soc.logic.models import organization as org_logic
-
-import soc.models.linkable
-import soc.models.student_project
+from soc.models.survey import Survey
 
 
-class Logic(base.Logic):
-  """Logic methods for the Student Project model.
+class ProjectSurvey(Survey):
+  """Survey for Students that have a StudentProject.
   """
 
-  def __init__(self, model=soc.models.student_project.StudentProject,
-               base_model=soc.models.linkable.Linkable, 
-               scope_logic=org_logic):
-    """Defines the name, key_name and model for this entity.
+  def __init__(self, *args, **kwargs):
+    super(ProjectSurvey, self).__init__(*args, **kwargs)
+    self.prefix = 'program'
+    self.taking_access = 'student'
+    self.scope = Program.get_by_key_name(self.scope_path)
+
+  def getRecords(self):
+    """Returns all ProjectSurveyRecords belonging to this survey.
     """
-
-    super(Logic, self).__init__(model=model, base_model=base_model,
-                                scope_logic=scope_logic)
-
-
-logic = Logic()
+    return self.project_survey_records

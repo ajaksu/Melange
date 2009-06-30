@@ -20,12 +20,15 @@
 __authors__ = [
   '"Daniel Diniz" <ajaksu@gmail.com>',
   '"James Levy" <jamesalexanderlevy@gmail.com>',
+  '"Lennard de Rijk" <ljvderijk@gmail.com>',
   ]
 
 
-import datetime
 from itertools import chain
+import datetime
 import logging
+
+from google.appengine.ext.db import djangoforms
 
 from django import forms
 from django.forms import widgets
@@ -35,12 +38,10 @@ from django.utils.encoding import force_unicode
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from google.appengine.ext.db import djangoforms
-
 from soc.logic import dicts
 from soc.logic.lists import Lists
 from soc.logic.models.survey import logic as survey_logic
-from soc.logic.models.survey import results_logic
+from soc.logic.models.survey_record import logic as results_logic
 from soc.models.survey import SurveyContent
 
 
@@ -103,7 +104,7 @@ class SurveyForm(djangoforms.ModelForm):
       read_only = self.read_only
 
       if not read_only:
-        deadline = self.survey_content.survey_parent.get().deadline
+        deadline = self.survey_content.survey_parent.get().survey_end
         read_only =  deadline and (datetime.datetime.now() > deadline)
       else:
         extra_attrs['disabled'] = 'disabled'
@@ -144,7 +145,8 @@ class SurveyForm(djangoforms.ModelForm):
       self.fields.insert(position, property, self.survey_fields[property])
       if not self.editing:
         property = 'comment_for_' + property
-        self.fields.insert(position - 1, property, self.survey_fields[property])
+        self.fields.insert(position - 1, property,
+                           self.survey_fields[property])
     return self.fields
 
   def addLongField(self, field, value, attrs, schema, req=False, label='', tip='',
@@ -152,14 +154,14 @@ class SurveyForm(djangoforms.ModelForm):
     """Add a long answer fields to this form.
 
     params:
-    field - the current field
-    value - the initial value for this field
-    attrs - additional attributes for field
-    req - required bool
-    label - label for field
-    tip - tooltip text for field
-    comment - initial comment value for field
-
+      field: the current field
+      value: the initial value for this field
+      attrs: additional attributes for field
+      schema: schema for survey
+      req: required bool
+      label: label for field
+      tip: tooltip text for field
+      comment: initial comment value for field
     """
 
     widget = widgets.Textarea(attrs=attrs)
@@ -173,20 +175,19 @@ class SurveyForm(djangoforms.ModelForm):
     self.survey_fields[field] = question
     self.addCommentField(field, comment, attrs, tip)
 
-
-  def addShortField(self, field, value, attrs,  schema, req=False, label='', tip='',
+  def addShortField(self, field, value, attrs, schema, req=False, label='', tip='',
                     comment=''):
     """Add a short answer fields to this form.
 
     params:
-    field - the current field
-    value - the initial value for this field
-    attrs - additional attributes for field
-    req - required bool
-    label - label for field
-    tip - tooltip text for field
-    comment - initial comment value for field
-
+      field: the current field
+      value: the initial value for this field
+      attrs: additional attributes for field
+      schema: schema for survey
+      req: required bool
+      label: label for field
+      tip: tooltip text for field
+      comment: initial comment value for field
     """
 
     attrs['class'] = "text_question"
@@ -206,15 +207,14 @@ class SurveyForm(djangoforms.ModelForm):
     """Add a selection field to this form.
 
     params:
-    field - the current field
-    value - the initial value for this field
-    attrs - additional attributes for field
-    schema - schema for survey
-    req - required bool
-    label - label for field
-    tip - tooltip text for field
-    comment - initial comment value for field
-
+      field: the current field
+      value: the initial value for this field
+      attrs: additional attributes for field
+      schema: schema for survey
+      req: required bool
+      label: label for field
+      tip: tooltip text for field
+      comment: initial comment value for field
     """
 
     widget = schema.getWidget(field, self.editing, attrs)
@@ -239,20 +239,19 @@ class SurveyForm(djangoforms.ModelForm):
     self.survey_fields[field] = question
     self.addCommentField(field, comment, attrs, tip)
 
-
   def addMultiField(self, field, value, attrs, schema, req=False, label='',
                     tip='', comment=''):
     """Add a pick_multi field to this form.
 
     params:
-    field - the current field
-    value - the initial value for this field
-    attrs - additional attributes for field
-    schema - schema for survey
-    req - required bool
-    label - label for field
-    tip - tooltip text for field
-    comment - initial comment value for field
+      field: the current field
+      value: the initial value for this field
+      attrs: additional attributes for field
+      schema: schema for survey
+      req: required bool
+      label: label for field
+      tip: tooltip text for field
+      comment: initial comment value for field
 
     """
 
@@ -281,14 +280,14 @@ class SurveyForm(djangoforms.ModelForm):
     """Add a pick_quant field to this form.
 
     params:
-    field - the current field
-    value - the initial value for this field
-    attrs - additional attributes for field
-    schema - schema for survey
-    req - required bool
-    label - label for field
-    tip - tooltip text for field
-    comment - initial comment value for field
+      field: the current field
+      value: the initial value for this field
+      attrs: additional attributes for field
+      schema: schema for survey
+      req: required bool
+      label: label for field
+      tip: tooltip text for field
+      comment: initial comment value for field
 
     """
 
@@ -322,8 +321,8 @@ class SurveyForm(djangoforms.ModelForm):
 
 
 class SurveyContentSchema(object):
-    """Abstract question metadata handling.
-    """
+  """Abstract question metadata handling.
+  """
 
   def __init__(self, schema):
     self.schema = eval(schema)
@@ -410,6 +409,7 @@ class UniversalChoiceEditor(widgets.Widget):
 
     template = 'soc/survey/universal_choice_editor.html'
     return loader.render_to_string(template, context)
+
 
 class PickOneField(forms.ChoiceField):
   """Stub for customizing the single choice field.
@@ -514,6 +514,8 @@ class PickQuantRadioRenderer(widgets.RadioFieldRenderer):
 
 
 class PickQuantRadio(forms.RadioSelect):
+  """TODO(James,Ajaksu) Fix Docstring
+  """
 
   renderer = PickQuantRadioRenderer
 
@@ -536,15 +538,16 @@ class SurveyResults(widgets.Widget):
     """ renders list of survey results
 
     params:
-    survey - current survey
-    params - dict of params for rendering list
-    filter - filter for list results
-    limit - limit for list results
-    offset - offset for list results
-    order - order for list results
-    idx - index for list results
-    context - context dict for template
+      survey: current survey
+      params: dict of params for rendering list
+      filter: filter for list results
+      limit: limit for list results
+      offset: offset for list results
+      order: order for list results
+      idx: index for list results
+      context: context dict for template
     """
+
     logic = results_logic
     filter = {'survey': survey}
     data = logic.getForFields(filter=filter, limit=limit, offset=offset,
@@ -590,9 +593,9 @@ class SurveyResults(widgets.Widget):
     return markup
 
 
-def getRoleSpecificFields(survey, user, this_project, survey_form, survey_record):
-  """
-  For evaluations, mentors get required Project and Grade fields, and
+def getRoleSpecificFields(survey, user, this_project, survey_form,
+                          survey_record):
+  """For evaluations, mentors get required Project and Grade fields, and
   students get a required Project field.
 
   Because we need to get a list of the user's projects, we call the
@@ -600,17 +603,18 @@ def getRoleSpecificFields(survey, user, this_project, survey_form, survey_record
   (No projects means that the survey cannot be taken.)
 
   params:
-  survey - the survey being taken
-  user - the survey-taking user
-  this_project - either an already-selected project, or None
-  survey_form - the surveyForm widget for this survey
-  survey_record - an existing survey record for a user-project-survey combo,
-  or None
+    survey: the survey being taken
+    user: the survey-taking user
+    this_project: either an already-selected project, or None
+    survey_form: the surveyForm widget for this survey
+    survey_record: an existing survey record for a user-project-survey combo,
+      or None
   """
 
   field_count = len(eval(survey.survey_content.schema).items())
   these_projects = survey_logic.getProjects(survey, user)
-  if not these_projects: return False # no projects found
+  if not these_projects:
+    return False # no projects found
 
   project_pairs = []
   #insert a select field with options for each project
@@ -638,7 +642,8 @@ def getRoleSpecificFields(survey, user, this_project, survey_form, survey_record
     survey_form.fields.insert(0, 'project', projectField )
 
   if survey.taking_access == "mentor evaluation":
-    # If this is a mentor, add a field determining if student passes or fails
+    # If this is a mentor, add a field
+    # determining if student passes or fails.
     # Activate grades handler should determine whether new status
     # is midterm_passed, final_passed, etc.
     grade_choices = (('pass', 'Pass'), ('fail', 'Fail'))
