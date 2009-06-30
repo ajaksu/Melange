@@ -221,7 +221,7 @@ class View(base.View):
 
     --- Deadlines ---
 
-    A deadline can also be used as a conditional for updating values,
+    A survey_end can also be used as a conditional for updating values,
     we have a special read_only UI and a check on the POST handler for this.
     Passing read_only=True here allows one to fetch the read_only view.
     """
@@ -276,7 +276,7 @@ class View(base.View):
     survey_content = survey.survey_content
 
     if not survey_record and read_only:
-      # no recorded answers, we're either past deadline or want to see answers
+      # no recorded answers, we're either past survey_end or want to see answers
       is_same_user = user.key() == user_logic.getForCurrentAccount().key()
 
       if not can_write or not is_same_user:
@@ -309,7 +309,7 @@ class View(base.View):
     return True
 
   def getStatus(self, request, context, user, survey):
-    """Determine if we're past deadline or before opening, check user rights.
+    """Determine if we're past survey_end or before survey_start, check user rights.
     """
 
     read_only = (context.get("read_only", False) or
@@ -318,9 +318,9 @@ class View(base.View):
                  )
     now = datetime.datetime.now()
 
-    # check deadline, see check for opening below
-    if survey.deadline and now > survey.deadline:
-      # are we already passed the deadline?
+    # check survey_end, see check for survey_start below
+    if survey.survey_end and now > survey.survey_end:
+      # are we already passed the survey_end?
       context["notice"] = "The Deadline For This Survey Has Passed"
       read_only = True
 
@@ -333,11 +333,11 @@ class View(base.View):
 
 
     not_ready = False
-    # check if we're past the opening date
-    if survey.opening and now < survey.opening:
+    # check if we're past the survey_start date
+    if survey.survey_start and now < survey.survey_start:
       not_ready = True
 
-      # only users that can edit a survey should see it before opening
+      # only users that can edit a survey should see it before survey_start
       if not can_write:
         context["notice"] = "There is no such survey available."
         return False
@@ -352,17 +352,17 @@ class View(base.View):
     """
 
     if not read_only:
-      if not survey.deadline:
-        deadline_text = ""
+      if not survey.survey_end:
+        survey_end_text = ""
       else:
-        deadline_text = " by " + str(
-      survey.deadline.strftime("%A, %d. %B %Y %I:%M%p"))
+        survey_end_text = " by " + str(
+      survey.survey_end.strftime("%A, %d. %B %Y %I:%M%p"))
 
       if survey_record:
-        help_text = "Edit and re-submit this survey" + deadline_text + "."
+        help_text = "Edit and re-submit this survey" + survey_end_text + "."
         status = "edit"
       else:
-        help_text = "Please complete this survey" + deadline_text + "."
+        help_text = "Please complete this survey" + survey_end_text + "."
         status = "create"
 
     else:
@@ -640,14 +640,14 @@ class View(base.View):
     context.update(local)
 
     params['edit_form'] = HelperForm(params['edit_form'])
-    if entity.deadline and datetime.datetime.now() > entity.deadline:
-      # are we already passed the deadline?
-      context["passed_deadline"] = True
+    if entity.survey_end and datetime.datetime.now() > entity.survey_end:
+      # are we already passed the survey_end?
+      context["passed_survey_end"] = True
 
     return super(View, self).editGet(request, entity, context, params=params)
 
   def getMenusForScope(self, entity, params):
-    """List featured surveys iff after the opening date and before deadline.
+    """List featured surveys iff after the survey_start date and before survey_end.
     """
 
     # only list surveys for registered users
@@ -692,11 +692,11 @@ class View(base.View):
       elif not survey_rights[entity.read_access]:
         continue
 
-      # omit if either before opening or after deadline
-      if entity.opening and entity.opening > now:
+      # omit if either before survey_start or after survey_end
+      if entity.survey_start and entity.survey_start > now:
         continue
 
-      if entity.deadline and entity.deadline < now:
+      if entity.survey_end and entity.survey_end < now:
         continue
 
       #TODO only if a document is readable it might be added
